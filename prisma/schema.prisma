@@ -10,26 +10,130 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  status    String   @default("active")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("users")
+enum Role {
+  CUSTOMER
+  ORGANIZER
 }
 
-model Article {
+enum EventType {
+  FREE
+  PAID
+}
+
+enum TransactionStatus {
+  WAITING_PAYMENT
+  WAITING_ADMIN
+  DONE
+  REJECTED
+  EXPIRED
+  CANCELED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         Role
+  referralCode String   @unique
+  referredById String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  referredBy   User?    @relation("ReferralRelation", fields: [referredById], references: [id])
+  referrals    User[]   @relation("ReferralRelation")
+
+  events       Event[]
+  transactions Transaction[]
+  points       Point[]
+  reviews      Review[]
+}
+
+model Event {
   id          String   @id @default(uuid())
+  organizerId String
   title       String
-  body        String
-  author      String
   description String
+  location    String
+  startDate   DateTime
+  endDate     DateTime
+  price       Int      // IDR
+  seatTotal   Int
+  seatLeft    Int
+  type        EventType
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@map("articles")
+  organizer   User     @relation(fields: [organizerId], references: [id])
+  transactions Transaction[]
+  vouchers    Voucher[]
+  reviews     Review[]
+}
+
+model Transaction {
+  id          String             @id @default(uuid())
+  userId      String
+  eventId     String
+  status      TransactionStatus
+  totalPrice  Int
+  expiresAt   DateTime
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  user        User               @relation(fields: [userId], references: [id])
+  event       Event              @relation(fields: [eventId], references: [id])
+  items       TransactionItem[]
+}
+
+model TransactionItem {
+  id            String   @id @default(uuid())
+  transactionId String
+  quantity      Int
+  price         Int
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+}
+
+model Point {
+  id        String   @id @default(uuid())
+  userId    String
+  amount    Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Voucher {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  eventId   String
+  discount  Int
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+
+  event     Event    @relation(fields: [eventId], references: [id])
+}
+
+model Coupon {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  discount  Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  eventId   String
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
 }
