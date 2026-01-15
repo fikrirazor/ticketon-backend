@@ -1,6 +1,8 @@
 import { Router } from "express";
-import { getProfile, getAllUsers } from "../controllers/user.controller";
+import { getProfile, getAllUsers, updateProfile, updatePassword } from "../controllers/user.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
+import { validateRequest } from "../middleware/validation.middleware";
+import { updateProfileSchema, changePasswordSchema } from "../validations/user.validation";
 
 const router = Router();
 
@@ -10,6 +12,20 @@ const router = Router();
  * @access  Private
  */
 router.get("/profile", authMiddleware, getProfile);
+
+router.patch(
+  "/profile",
+  authMiddleware,
+  validateRequest(updateProfileSchema),
+  updateProfile
+);
+
+router.patch(
+  "/password",
+  authMiddleware,
+  validateRequest(changePasswordSchema),
+  updatePassword
+);
 
 /**
  * @route   GET /api/users

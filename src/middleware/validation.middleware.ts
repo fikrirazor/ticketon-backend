@@ -1,12 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { AnySchema } from "yup";
+import * as yup from "yup";
 
-export const validate = (schema: AnySchema) => {
-  return async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+export const validateRequest = (schema: yup.Schema<any>) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
       await schema.validate(req.body, {
         abortEarly: false,

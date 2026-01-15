@@ -8,6 +8,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -35,6 +36,7 @@ model User {
   email        String   @unique
   password     String
   role         Role
+  avatar       String?
   referralCode String   @unique
   referredById String?
   createdAt    DateTime @default(now())
@@ -55,6 +57,7 @@ model Event {
   title       String
   description String
   location    String
+  image       String?
   startDate   DateTime
   endDate     DateTime
   price       Int      // IDR
@@ -71,18 +74,24 @@ model Event {
 }
 
 model Transaction {
-  id          String             @id @default(uuid())
-  userId      String
-  eventId     String
-  status      TransactionStatus
-  totalPrice  Int
-  expiresAt   DateTime
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id           String             @id @default(uuid())
+  userId       String
+  eventId      String
+  status       TransactionStatus
+  totalPrice   Int
+  pointsUsed   Int                @default(0)
+  paymentProof String?
+  voucherId    String?
+  couponId     String?
+  expiresAt    DateTime
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
-  user        User               @relation(fields: [userId], references: [id])
-  event       Event              @relation(fields: [eventId], references: [id])
-  items       TransactionItem[]
+  user         User               @relation(fields: [userId], references: [id])
+  event        Event              @relation(fields: [eventId], references: [id])
+  voucher      Voucher?           @relation(fields: [voucherId], references: [id])
+  coupon       Coupon?            @relation(fields: [couponId], references: [id])
+  items        TransactionItem[]
 }
 
 model TransactionItem {
@@ -114,6 +123,7 @@ model Voucher {
   createdAt DateTime @default(now())
 
   event     Event    @relation(fields: [eventId], references: [id])
+  transactions Transaction[]
 }
 
 model Coupon {
@@ -122,6 +132,8 @@ model Coupon {
   discount  Int
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  transactions Transaction[]
 }
 
 model Review {

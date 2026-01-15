@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { AppError } from "../middleware/error.middleware";
+import * as userService from "../services/user.service";
 
 export const getProfile = async (
   req: Request,
