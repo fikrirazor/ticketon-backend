@@ -60,7 +60,9 @@ model Event {
   price       Int      // IDR
   seatTotal   Int
   seatLeft    Int
-  type        EventType
+  category    String
+  imageUrl    String?
+  isPromoted  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
