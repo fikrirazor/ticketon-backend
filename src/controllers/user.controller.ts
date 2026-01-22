@@ -50,7 +50,7 @@ export const getAllUsers = async (
         id: true,
         name: true,
         email: true,
-        status: true,
+        role: true,
         createdAt: true,
         updatedAt: true,
       },
