@@ -3,6 +3,7 @@ import prisma from "../config/database";
 import { hashPassword, comparePassword } from "../utils/password.util";
 import { generateToken } from "../utils/jwt.util";
 import { AppError } from "../middleware/error.middleware";
+import { generateReferralCode } from "../utils/referral.util";
 
 export const signUp = async (
   req: Request,
@@ -31,12 +32,16 @@ export const signUp = async (
         name,
         email,
         password: hashedPassword,
+        role: "CUSTOMER",
+        referralCode: generateReferralCode(),
       },
       select: {
         id: true,
         name: true,
         email: true,
-        status: true,
+        role: true,
+        referralCode: true,
+        referredById: true,
         createdAt: true,
         updatedAt: true,
       },

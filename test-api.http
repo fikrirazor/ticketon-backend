@@ -1,0 +1,120 @@
+### Event Discovery API Testing
+### Base URL
+@baseUrl = http://localhost:8000/api
+@token = YOUR_JWT_TOKEN_HERE
+
+### ============================================
+### 1. AUTHENTICATION (Get Token First)
+### ============================================
+
+### Register new user (CUSTOMER)
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Test Customer",
+  "email": "customer@test.com",
+  "password": "Password123",
+  "confirmPassword": "Password123"
+}
+
+### Register new organizer (manually change role in DB or create organizer endpoint)
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Test Organizer",
+  "email": "organizer@test.com",
+  "password": "Password123",
+  "confirmPassword": "Password123"
+}
+
+### Login (try both signin and login)
+POST {{baseUrl}}/auth/signin
+Content-Type: application/json
+
+{
+  "email": "organizer@test.com",
+  "password": "Password123"
+}
+
+### Alternative: try /login if /signin doesn't work
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "organizer@test.com",
+  "password": "Password123"
+}
+
+### ============================================
+### 2. EVENT ENDPOINTS (Public)
+### ============================================
+
+### Get all events (no filter)
+GET {{baseUrl}}/events
+
+### Get events with pagination
+GET {{baseUrl}}/events?page=1&limit=5
+
+### Get events by category
+GET {{baseUrl}}/events?category=Music
+
+### Get events by location
+GET {{baseUrl}}/events?location=Jakarta
+
+### Search events
+GET {{baseUrl}}/events?search=concert
+
+### Combined filters
+GET {{baseUrl}}/events?category=Music&location=Jakarta&search=rock&page=1&limit=10
+
+### Get single event by ID
+GET {{baseUrl}}/events/EVENT_ID_HERE
+
+### ============================================
+### 3. EVENT ENDPOINTS (Protected - Need Token)
+### ============================================
+
+### Create new event (ORGANIZER only)
+POST {{baseUrl}}/events
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Rock Concert 2026",
+  "description": "Amazing rock concert featuring top bands",
+  "location": "Jakarta Convention Center",
+  "startDate": "2026-03-15T19:00:00Z",
+  "endDate": "2026-03-15T23:00:00Z",
+  "price": 500000,
+  "seatTotal": 1000,
+  "category": "Music",
+  "imageUrl": "https://example.com/concert.jpg",
+  "isPromoted": true
+}
+
+### Update event (Owner only)
+PUT {{baseUrl}}/events/EVENT_ID_HERE
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Updated Rock Concert 2026",
+  "price": 450000,
+  "seatTotal": 1200
+}
+
+### Delete event (Owner only)
+DELETE {{baseUrl}}/events/EVENT_ID_HERE
+Authorization: Bearer {{token}}
+
+### ============================================
+### 4. HEALTH CHECK
+### ============================================
+
+### Check server health
+GET {{baseUrl}}/health
+
+### Root endpoint
+GET http://localhost:8000/
