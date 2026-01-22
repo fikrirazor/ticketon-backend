@@ -1,6 +1,6 @@
 import prisma from "../config/database";
 import { AppError } from "../middleware/error.middleware";
-import { TransactionStatus } from "@prisma/client";
+import { TransactionStatus } from "../generated/prisma/client";
 
 export const createReview = async (
   userId: string,

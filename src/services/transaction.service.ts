@@ -1,5 +1,5 @@
 import prisma from "../config/database";
-import { TransactionStatus } from "@prisma/client";
+import { TransactionStatus } from "../generated/prisma/client";
 import { AppError } from "../middleware/error.middleware";
 
 export const createTransaction = async (
@@ -9,6 +9,7 @@ export const createTransaction = async (
     ticketQty: number;
     usePoints: boolean;
     voucherCode?: string;
+    couponCode?: string;
   }
 ) => {
   return await prisma.$transaction(async (tx) => {
@@ -30,6 +31,8 @@ export const createTransaction = async (
 
     // 3. Calculate Price
     let totalPrice = event.price * data.ticketQty;
+    let voucherId: string | null = null;
+    let couponId: string | null = null;
     
     // Apply Voucher (if any)
     if (data.voucherCode) {
@@ -43,6 +46,48 @@ export const createTransaction = async (
       }
       
       totalPrice -= voucher.discount;
+      voucherId = voucher.id;
+    }
+
+    // Apply Coupon (if any)
+    if (data.couponCode) {
+         // Assuming Coupon is generic provided by system, or user specific?
+         // Schema: Coupon { ... code, discount, expiresAt ... }
+         // It does not have owner userId in schema. But referral logic created generic reusable code?
+         // "Users registering with a referral get a discount coupon" -> usually implies unique use.
+         // With current schema, "code" is unique.
+         // Let's assume anyone who knows the code can use it, validation is just expiry.
+         
+         const coupon = await tx.coupon.findUnique({
+             where: { code: data.couponCode }
+         });
+         
+         const now = new Date();
+         if (!coupon || now > coupon.expiresAt) {
+             throw new AppError(400, "Invalid or expired coupon");
+         }
+         
+         // Should check if already used? 
+         // Schema: Coupon has transactions Transaction[]
+         // If it's single use, we should check if used.
+         // Requirement says: "Reward / Coupon Discount: ... can be used for all events."
+         // Typically referral coupons are single use.
+         // "Users registering ... get a discount coupon" implies single use.
+         // Let's enforce single use if it comes from referral (based on logic).
+         // But Schema doesn't have "isUsed" or similar.
+         // We can check `transactions` usage count?
+         // Let's check if this coupon has been used in any transaction.
+         
+         const usedCount = await tx.transaction.count({
+             where: { couponId: coupon.id } // Transaction relation
+         });
+         
+         if (usedCount > 0) {
+             throw new AppError(400, "Coupon has already been used");
+         }
+
+         totalPrice -= coupon.discount;
+         couponId = coupon.id;
     }
 
     // Apply Points
@@ -68,6 +113,9 @@ export const createTransaction = async (
         userId,
         eventId: data.eventId,
         totalPrice,
+        pointsUsed,
+        voucherId,
+        couponId,
         status: TransactionStatus.WAITING_PAYMENT,
         items: {
              create: {
@@ -135,7 +183,7 @@ export const uploadPaymentProof = async (transactionId: string, userId: string, 
     return await prisma.transaction.update({
         where: { id: transactionId },
         data: {
-            proofImage: filePath,
+            paymentProof: filePath,
             status: TransactionStatus.WAITING_ADMIN
         }
     });

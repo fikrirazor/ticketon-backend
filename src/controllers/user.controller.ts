@@ -51,7 +51,6 @@ export const getAllUsers = async (
         id: true,
         name: true,
         email: true,
-        status: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -65,6 +64,49 @@ export const getAllUsers = async (
       data: { users, count: users.length },
       page: 1,
       limit: 10,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const user = await userService.updateProfile(req.user.id, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updatePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    await userService.updatePassword(req.user.id, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
     });
   } catch (error) {
     next(error);
