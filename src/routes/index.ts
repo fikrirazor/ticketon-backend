@@ -1,7 +1,6 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes";
 import userRoutes from "./user.routes";
-import articleRoutes from "./article.routes";
 import eventRoutes from "./event.routes";
 import voucherRoutes from "./voucher.routes";
 
@@ -19,7 +18,6 @@ router.get("/health", (_req, res) => {
 // API routes
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
-router.use("/article", articleRoutes);
 router.use("/events", eventRoutes);
 router.use("/vouchers", voucherRoutes);
 
