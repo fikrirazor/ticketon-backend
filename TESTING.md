@@ -290,3 +290,44 @@ npm run prisma:push
 - Price is in IDR (Indonesian Rupiah)
 - `seatLeft` is automatically set to `seatTotal` on creation
 - Events are ordered by `createdAt` DESC (newest first)
+
+## 📦 Voucher Management (Protected Endpoints)
+
+### Create Voucher (Organizer only)
+
+POST {{baseUrl}}/events/EVENT_ID_HERE/vouchers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+"code": "DISCOUNT2026",
+"discountPercent": 10,
+"maxUsage": 100,
+"startDate": "2026-01-01T00:00:00Z",
+"endDate": "2026-12-31T23:59:59Z"
+}
+
+### Get Vouchers for Event
+
+GET {{baseUrl}}/events/EVENT_ID_HERE/vouchers
+Authorization: Bearer {{token}}
+
+### Validate Voucher (Public)
+
+GET {{baseUrl}}/vouchers/DISCOUNT2026/validate
+
+### Update Voucher (Organizer only)
+
+PUT {{baseUrl}}/vouchers/VOUCHER_ID_HERE
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+"maxUsage": 200,
+"endDate": "2026-12-31T23:59:59Z"
+}
+
+### Delete Voucher (Organizer only)
+
+DELETE {{baseUrl}}/vouchers/VOUCHER_ID_HERE
+Authorization: Bearer {{token}}
