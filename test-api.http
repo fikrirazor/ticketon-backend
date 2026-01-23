@@ -118,3 +118,44 @@ GET {{baseUrl}}/health
 
 ### Root endpoint
 GET http://localhost:8000/
+
+### ============================================
+### 5. VOUCHER ENDPOINTS
+### ============================================
+
+### Create Voucher for Event (Organizer only)
+POST {{baseUrl}}/events/EVENT_ID_HERE/vouchers
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "code": "DISCOUNT2026",
+  "discountPercent": 10,
+  "maxUsage": 100,
+  "startDate": "2026-01-01T00:00:00Z",
+  "endDate": "2026-12-31T23:59:59Z"
+}
+
+### Get Vouchers for Event (Organizer only)
+GET {{baseUrl}}/events/EVENT_ID_HERE/vouchers
+Authorization: Bearer {{token}}
+
+### Validate Voucher (Public)
+GET {{baseUrl}}/vouchers/DISCOUNT2026/validate
+
+### Validate Voucher with Event Check
+GET {{baseUrl}}/vouchers/DISCOUNT2026/validate?eventId=EVENT_ID_HERE
+
+### Update Voucher (Organizer only)
+PUT {{baseUrl}}/vouchers/VOUCHER_ID_HERE
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "maxUsage": 200,
+  "endDate": "2026-12-31T23:59:59Z"
+}
+
+### Delete Voucher (Organizer only)
+DELETE {{baseUrl}}/vouchers/VOUCHER_ID_HERE
+Authorization: Bearer {{token}}

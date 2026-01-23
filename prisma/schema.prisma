@@ -107,15 +107,18 @@ model Point {
 }
 
 model Voucher {
-  id        String   @id @default(uuid())
-  code      String   @unique
-  eventId   String
-  discount  Int
-  startDate DateTime
-  endDate   DateTime
-  createdAt DateTime @default(now())
+  id              String   @id @default(uuid())
+  code            String   @unique
+  eventId         String
+  discountAmount  Int?
+  discountPercent Int?
+  maxUsage        Int      @default(100)
+  usedCount       Int      @default(0)
+  startDate       DateTime
+  endDate         DateTime
+  createdAt       DateTime @default(now())
 
-  event     Event    @relation(fields: [eventId], references: [id])
+  event           Event    @relation(fields: [eventId], references: [id])
 }
 
 model Coupon {
