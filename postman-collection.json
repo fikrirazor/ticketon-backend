@@ -305,6 +305,125 @@
           }
         }
       ]
+    },
+    {
+      "name": "Voucher Management",
+      "item": [
+        {
+          "name": "Create Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"DISCOUNT2026\",\n  \"discountPercent\": 10,\n  \"maxUsage\": 100,\n  \"startDate\": \"2026-01-01T00:00:00Z\",\n  \"endDate\": \"2026-12-31T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/EVENT_ID_HERE/vouchers",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "EVENT_ID_HERE", "vouchers"]
+            }
+          }
+        },
+        {
+          "name": "Get Event Vouchers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/events/EVENT_ID_HERE/vouchers",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "EVENT_ID_HERE", "vouchers"]
+            }
+          }
+        },
+        {
+          "name": "Validate Voucher",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/DISCOUNT2026/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers", "DISCOUNT2026", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Validate Voucher (with Event)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/DISCOUNT2026/validate?eventId=EVENT_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers", "DISCOUNT2026", "validate"],
+              "query": [
+                {
+                  "key": "eventId",
+                  "value": "EVENT_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Voucher",
+          "request": {
+            "method": "PUT",
+            "header": [
+               {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxUsage\": 200,\n  \"endDate\": \"2026-12-31T23:59:59Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/VOUCHER_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers", "VOUCHER_ID_HERE"]
+            }
+          }
+        },
+         {
+          "name": "Delete Voucher",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/VOUCHER_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers", "VOUCHER_ID_HERE"]
+            }
+          }
+        }
+      ]
     }
   ]
 }
