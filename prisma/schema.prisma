@@ -39,6 +39,7 @@ model User {
   referredById String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  ratingSummary Float    @default(0)
 
   referredBy   User?    @relation("ReferralRelation", fields: [referredById], references: [id])
   referrals    User[]   @relation("ReferralRelation")
@@ -65,6 +66,7 @@ model Event {
   isPromoted  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  rating      Float    @default(0)
 
   organizer   User     @relation(fields: [organizerId], references: [id])
   transactions Transaction[]
@@ -140,7 +142,7 @@ model Review {
   userId    String
   eventId   String
   rating    Int
-  comment   String
+  comment   String?
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
