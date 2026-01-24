@@ -1,6 +1,7 @@
 import app from './app';
 import config from './config/env';
 import prisma from './config/database';
+import { initTransactionCron } from './utils/transaction.cron';
 
 const PORT = config.port;
 
@@ -26,6 +27,10 @@ const startServer = async () => {
     // Test database connection
     await prisma.$connect();
     console.log('✅ Database connected successfully');
+
+    // Initialize Cron Jobs
+    initTransactionCron();
+    console.log('⏰ Transaction cron job initialized');
 
     // Start listening
     app.listen(PORT, () => {

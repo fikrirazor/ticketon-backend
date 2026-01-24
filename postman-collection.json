@@ -424,6 +424,124 @@
           }
         }
       ]
+    },
+    {
+      "name": "Transaction Management",
+      "item": [
+        {
+          "name": "Create Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"EVENT_ID_HERE\",\n  \"voucherId\": \"VOUCHER_ID_HERE\",\n  \"pointsUsed\": 0,\n  \"items\": [\n    {\n      \"quantity\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions"]
+            }
+          }
+        },
+        {
+          "name": "Get Transaction Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/TRANSACTION_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "TRANSACTION_ID_HERE"]
+            }
+          }
+        },
+        {
+          "name": "Upload Payment Proof",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "paymentProof",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/TRANSACTION_ID_HERE/payment-proof",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "TRANSACTION_ID_HERE", "payment-proof"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Transaction",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/TRANSACTION_ID_HERE/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "TRANSACTION_ID_HERE", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Get My Transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/me?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "me"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }

@@ -3,6 +3,7 @@ import authRoutes from "./auth.routes";
 import userRoutes from "./user.routes";
 import eventRoutes from "./event.routes";
 import voucherRoutes from "./voucher.routes";
+import transactionRoutes from "./transaction.routes";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/events", eventRoutes);
 router.use("/vouchers", voucherRoutes);
+router.use("/transactions", transactionRoutes);
 
 export default router;
