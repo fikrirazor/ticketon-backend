@@ -40,3 +40,6 @@ prisma/migrations/
 
 
 /src/generated/prisma
+
+# Add this line to ignore the documents folder
+documents/

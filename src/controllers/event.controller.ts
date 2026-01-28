@@ -115,7 +115,8 @@ export const createEvent = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { title, description, location, startDate, endDate, price, seatTotal, category, imageUrl, isPromoted } = req.body;
+    const { title, description, location, startDate, endDate, price, seatTotal, category, imageUrl: bodyImageUrl, isPromoted } = req.body;
+    const imageUrl = (req as any).file?.path || bodyImageUrl;
     
     // Assumes authMiddleware attaches user to req.user (and organizer only check if implemented there, or role check needed here?)
     // Requirement says "protected, organizer only". authMiddleware checks validity but maybe not role.
@@ -126,6 +127,10 @@ export const createEvent = async (
         throw new AppError(403, "Access denied. Only organizers can create events.");
     }
 
+    // Convert string values to numbers (from frontend form data)
+    const priceInt = parseInt(price as any);
+    const seatTotalInt = parseInt(seatTotal as any);
+
     const event = await prisma.event.create({
       data: {
         title,
@@ -133,9 +138,9 @@ export const createEvent = async (
         location,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
-        price,
-        seatTotal,
-        seatLeft: seatTotal, // Initially seatLeft equals seatTotal
+        price: priceInt,
+        seatTotal: seatTotalInt,
+        seatLeft: seatTotalInt, // Initially seatLeft equals seatTotal
         category,
         imageUrl,
         isPromoted: isPromoted || false,

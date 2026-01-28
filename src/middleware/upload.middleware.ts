@@ -3,16 +3,15 @@ import path from "path";
 import fs from "fs";
 import { AppError } from "./error.middleware";
 
-const uploadDir = "uploads/payment-proofs";
-
-// Ensure directory exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
+  destination: (req, _file, cb) => {
+    const subDir = (req as any).uploadDir || "general";
+    const fullPath = path.join("uploads", subDir);
+    
+    if (!fs.existsSync(fullPath)) {
+      fs.mkdirSync(fullPath, { recursive: true });
+    }
+    cb(null, fullPath);
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

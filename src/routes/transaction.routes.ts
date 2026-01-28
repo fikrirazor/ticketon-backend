@@ -22,8 +22,12 @@ router.post("/", authMiddleware, validate(createTransactionSchema), createTransa
 router.post(
   "/:id/payment-proof",
   authMiddleware,
+  (req, _res, next) => {
+    (req as any).uploadDir = "payment-proofs";
+    next();
+  },
   upload.single("paymentProof"),
-  validate(uploadPaymentProofSchema),
+  validate(uploadPaymentProofSchema, "params"),
   uploadPaymentProof
 );
 router.put("/:id/cancel", authMiddleware, cancelTransaction);
