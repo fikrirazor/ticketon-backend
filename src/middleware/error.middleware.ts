@@ -1,16 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ValidationError } from "yup";
-
-export class AppError extends Error {
-  constructor(
-    public statusCode: number,
-    public message: string,
-    public isOperational = true
-  ) {
-    super(message);
-    Object.setPrototypeOf(this, AppError.prototype);
-  }
-}
+import { AppError } from "../utils/error";
 
 export const errorHandler = (
   err: Error,

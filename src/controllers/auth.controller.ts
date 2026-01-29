@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { hashPassword, comparePassword } from "../utils/password.util";
 import { generateToken } from "../utils/jwt.util";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../utils/error";
 import { generateReferralCode } from "../utils/referral.util";
 
 export const signUp = async (
