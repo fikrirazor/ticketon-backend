@@ -3,6 +3,7 @@ export interface PaginationMeta {
   limit: number;
   total: number;
   totalPages: number;
+  [key: string]: any;
 }
 
 export interface ApiResponse<T = any> {

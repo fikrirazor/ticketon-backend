@@ -4,6 +4,7 @@ import userRoutes from "./user.routes";
 import eventRoutes from "./event.routes";
 import voucherRoutes from "./voucher.routes";
 import transactionRoutes from "./transaction.routes";
+import reviewRoutes from "./review.routes";
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use("/users", userRoutes);
 router.use("/events", eventRoutes);
 router.use("/vouchers", voucherRoutes);
 router.use("/transactions", transactionRoutes);
+router.use("/reviews", reviewRoutes);
 
 export default router;

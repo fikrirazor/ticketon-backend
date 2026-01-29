@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { hashPassword, comparePassword } from "../utils/password.util";
 import { generateToken } from "../utils/jwt.util";
-import { AppError } from "../middleware/error.middleware";
+import { AppError } from "../utils/error";
 import { generateReferralCode } from "../utils/referral.util";
 
 export const signUp = async (
@@ -11,7 +11,7 @@ export const signUp = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     console.log("req.body", req.body);
 
     // Check if user already exists
@@ -32,7 +32,7 @@ export const signUp = async (
         name,
         email,
         password: hashedPassword,
-        role: "CUSTOMER",
+        role: role || "CUSTOMER",
         referralCode: generateReferralCode(),
       },
       select: {
@@ -102,7 +102,10 @@ export const signIn = async (
       data: {
         user: {
           id: user.id,
+          name: user.name,
           email: user.email,
+          role: user.role,
+          referralCode: user.referralCode,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },

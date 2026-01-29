@@ -542,6 +542,128 @@
           }
         }
       ]
+    },
+    {
+      "name": "Review Management",
+      "item": [
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Amazing event! Highly recommended.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reviews/events/EVENT_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "events", "EVENT_ID_HERE"]
+            }
+          }
+        },
+        {
+          "name": "Get Event Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/events/EVENT_ID_HERE?page=1&limit=10&sortBy=newest",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "events", "EVENT_ID_HERE"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "sortBy", "value": "newest" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Organizer Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/organizers/ORGANIZER_ID_HERE?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "organizers", "ORGANIZER_ID_HERE"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Eligible Reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/me/eligible",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "me", "eligible"]
+            }
+          }
+        },
+        {
+          "name": "Update Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated my review: it was great but slightly too loud.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reviews/REVIEW_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "REVIEW_ID_HERE"]
+            }
+          }
+        },
+        {
+          "name": "Delete Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/REVIEW_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "REVIEW_ID_HERE"]
+            }
+          }
+        }
+      ]
     }
   ]
 }

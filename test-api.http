@@ -159,3 +159,41 @@ Authorization: Bearer {{token}}
 ### Delete Voucher (Organizer only)
 DELETE {{baseUrl}}/vouchers/VOUCHER_ID_HERE
 Authorization: Bearer {{token}}
+
+### ============================================
+### 6. REVIEW ENDPOINTS
+### ============================================
+
+### Create Review for Event (Customer only, after event ends and attended)
+POST {{baseUrl}}/reviews/events/EVENT_ID_HERE
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "rating": 5,
+  "comment": "Amazing event! Highly recommended."
+}
+
+### Get All Reviews for Event (Public)
+GET {{baseUrl}}/reviews/events/EVENT_ID_HERE?page=1&limit=10&sortBy=newest
+
+### Get All Reviews for Organizer (Public)
+GET {{baseUrl}}/reviews/organizers/ORGANIZER_ID_HERE?page=1&limit=10
+
+### Get Eligible Reviews (Events user can review)
+GET {{baseUrl}}/reviews/me/eligible
+Authorization: Bearer {{token}}
+
+### Update Review (Owner only, within 24h)
+PUT {{baseUrl}}/reviews/REVIEW_ID_HERE
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "rating": 4,
+  "comment": "Updated my review: it was great but slightly too loud."
+}
+
+### Delete Review (Owner only)
+DELETE {{baseUrl}}/reviews/REVIEW_ID_HERE
+Authorization: Bearer {{token}}
