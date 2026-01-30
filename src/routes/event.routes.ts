@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getEvents, getEventById, createEvent, updateEvent, deleteEvent } from "../controllers/event.controller";
-import { authMiddleware } from "../middleware/auth.middleware";
+import { authMiddleware, authorizeRoles } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validation.middleware";
 import { createEventSchema, updateEventSchema, queryEventSchema } from "../validations/event.validation";
 import { createVoucher, getVouchersByEvent } from "../controllers/voucher.controller";
@@ -15,6 +15,7 @@ router.get("/:id", getEventById);
 router.post(
   "/",
   authMiddleware,
+  authorizeRoles("ORGANIZER"),
   (req, _res, next) => {
     (req as any).uploadDir = "events";
     next();
@@ -23,10 +24,10 @@ router.post(
   validate(createEventSchema),
   createEvent
 );
-router.put("/:id", authMiddleware, validate(updateEventSchema), updateEvent);
-router.delete("/:id", authMiddleware, deleteEvent);
+router.put("/:id", authMiddleware, authorizeRoles("ORGANIZER"), validate(updateEventSchema), updateEvent);
+router.delete("/:id", authMiddleware, authorizeRoles("ORGANIZER"), deleteEvent);
 
-router.post("/:eventId/vouchers", authMiddleware, validate(createVoucherSchema), createVoucher);
+router.post("/:eventId/vouchers", authMiddleware, authorizeRoles("ORGANIZER"), validate(createVoucherSchema), createVoucher);
 router.get("/:eventId/vouchers", authMiddleware, getVouchersByEvent);
 
 export default router;

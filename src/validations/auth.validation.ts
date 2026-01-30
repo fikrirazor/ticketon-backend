@@ -19,6 +19,7 @@ export const signUpSchema = yup.object({
     .oneOf([yup.ref("password")], "Passwords must match")
     .required("Confirm password is required"),
   role: yup.string().oneOf(["CUSTOMER", "ORGANIZER"]).optional().default("CUSTOMER"),
+  referralCode: yup.string().optional(),
 });
 
 export const signInSchema = yup.object({

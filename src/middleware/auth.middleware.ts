@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import config from "../config/env";
 import prisma from "../config/database";
 
+import { AppError } from "../utils/error";
+
 interface JwtPayload {
   userId: string;
   email: string;
@@ -42,6 +44,7 @@ export const authMiddleware = async (
         referredById: true,
         createdAt: true,
         updatedAt: true,
+        ratingSummary: true,
       },
     });
 
@@ -78,4 +81,20 @@ export const authMiddleware = async (
       message: "Server error during authentication.",
     });
   }
+};
+
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(new AppError(401, "User not authenticated"));
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError(403, `User role ${req.user.role} is not authorized to access this route`)
+      );
+    }
+
+    next();
+  };
 };
