@@ -3,7 +3,18 @@ import * as yup from "yup";
 export const createEventSchema = yup.object().shape({
   title: yup.string().required("Title is required").min(3, "Title must be at least 3 characters"),
   description: yup.string().required("Description is required").min(10, "Description must be at least 10 characters"),
-  location: yup.string().required("Location is required"),
+  locationId: yup.number().integer().positive().nullable(),
+  location: yup
+    .string()
+    .nullable()
+    .test(
+      "location-or-id",
+      "Either location (city) or locationId is required",
+      function (value) {
+        return !!value || !!this.parent.locationId;
+      }
+    ),
+  address: yup.string().required("Address is required"),
   startDate: yup.date().required("Start date is required").typeError("Start date must be a valid date"),
   endDate: yup
     .date()
@@ -28,6 +39,7 @@ export const createEventSchema = yup.object().shape({
 export const updateEventSchema = yup.object().shape({
   title: yup.string().min(3),
   description: yup.string().min(10),
+  locationId: yup.number().integer().positive(),
   location: yup.string(),
   startDate: yup.date(),
   endDate: yup.date().min(yup.ref("startDate"), "End date must be after start date"),

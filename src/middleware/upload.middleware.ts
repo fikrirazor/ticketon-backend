@@ -1,7 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { AppError } from "./error.middleware";
+import { AppError } from "../utils/error";
 
 const storage = multer.diskStorage({
   destination: (req, _file, cb) => {

@@ -28,10 +28,10 @@ export const getEvents = async (
       where.category = category as string;
     }
 
+    // Filter by related Location.city instead of a non-existent `location` string on Event
     if (location) {
       where.location = {
-        contains: location as string,
-        mode: "insensitive",
+        city: { contains: location as string, mode: "insensitive" },
       };
     }
 
@@ -56,6 +56,12 @@ export const getEvents = async (
                     id: true,
                     name: true,
                     email: true
+                }
+            },
+            location: {
+                select: {
+                  id: true,
+                  city: true
                 }
             }
         }
@@ -94,6 +100,9 @@ export const getEventById = async (
                 name: true,
                 email: true
             }
+        },
+        location: {
+          select: { id: true, city: true }
         }
     }
     });
@@ -115,19 +124,51 @@ export const createEvent = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { title, description, location, startDate, endDate, price, seatTotal, category, imageUrl: bodyImageUrl, isPromoted } = req.body;
+    // support both locationId (int) or location (city string) + address
+    const {
+      title,
+      description,
+      locationId,
+      location: locationCity,
+      address,
+      startDate,
+      endDate,
+      price,
+      seatTotal,
+      category,
+      imageUrl: bodyImageUrl,
+      isPromoted,
+    } = req.body;
+
     const imageUrl = (req as any).file?.path || bodyImageUrl;
-    
-    // Assumes authMiddleware attaches user to req.user (and organizer only check if implemented there, or role check needed here?)
-    // Requirement says "protected, organizer only". authMiddleware checks validity but maybe not role.
-    // I will assume simple Role check if User model has role. User model from schema has Role enum.
-    
+
     const user = (req as any).user;
     if (user.role !== "ORGANIZER") {
-        throw new AppError(403, "Access denied. Only organizers can create events.");
+      throw new AppError(403, "Access denied. Only organizers can create events.");
     }
 
-    // Convert string values to numbers (from frontend form data)
+    // address is required now
+    if (!address) {
+      throw new AppError(400, "Address is required for an event");
+    }
+
+    // Resolve Location: prefer explicit locationId, otherwise find/create by city
+    let locationIdToUse: number | undefined;
+    if (locationId) {
+      locationIdToUse = parseInt(locationId as any);
+    } else if (locationCity) {
+      const city = (locationCity as string).trim();
+      let locationRecord = await prisma.location.findUnique({ where: { city } });
+      if (!locationRecord) {
+        locationRecord = await prisma.location.create({ data: { city } });
+      }
+      locationIdToUse = locationRecord.id;
+    }
+
+    if (!locationIdToUse) {
+      throw new AppError(400, "Location or locationId is required");
+    }
+
     const priceInt = parseInt(price as any);
     const seatTotalInt = parseInt(seatTotal as any);
 
@@ -135,7 +176,7 @@ export const createEvent = async (
       data: {
         title,
         description,
-        location,
+        address,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         price: priceInt,
@@ -145,6 +186,7 @@ export const createEvent = async (
         imageUrl,
         isPromoted: isPromoted || false,
         organizerId: user.id,
+        locationId: locationIdToUse,
       },
     });
 
@@ -178,6 +220,17 @@ export const updateEvent = async (
     // Transform dates if present
     if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
     if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
+
+    // Handle update of location by city string (create if necessary)
+    if (updateData.location) {
+      const city = (updateData.location as string).trim();
+      let locationRecord = await prisma.location.findUnique({ where: { city } });
+      if (!locationRecord) {
+        locationRecord = await prisma.location.create({ data: { city } });
+      }
+      updateData.locationId = locationRecord.id;
+      delete updateData.location;
+    }
 
     const updatedEvent = await prisma.event.update({
       where: { id },
