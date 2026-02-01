@@ -22,7 +22,9 @@ export const getEvents = async (
 
     const { skip, take } = getPagination(page, limit);
 
-    const where: any = {};
+    const where: any = {
+      deletedAt: null
+    };
 
     if (category) {
       where.category = category as string;
@@ -91,8 +93,8 @@ export const getEventById = async (
   try {
     const { id } = req.params;
 
-    const event = await prisma.event.findUnique({
-      where: { id },
+    const event = await prisma.event.findFirst({
+      where: { id, deletedAt: null },
       include: {
         organizer: {
             select: {
@@ -209,12 +211,31 @@ export const updateEvent = async (
 
     const event = await prisma.event.findUnique({ where: { id } });
 
-    if (!event) {
+    if (!event || event.deletedAt) {
       throw new AppError(404, "Event not found");
     }
 
     if (event.organizerId !== user.id) {
         throw new AppError(403, "You are not authorized to update this event");
+    }
+
+    // If updating capacity, check if there are any transactions
+    if (updateData.seatTotal !== undefined && updateData.seatTotal !== event.seatTotal) {
+        const transactionCount = await prisma.transaction.count({
+            where: { eventId: id }
+        });
+
+        if (transactionCount > 0) {
+            throw new AppError(400, "Cannot change capacity because transactions already exist for this event");
+        }
+        
+        // Update seatLeft as well if seatTotal changes
+        const diff = updateData.seatTotal - event.seatTotal;
+        updateData.seatLeft = event.seatLeft + diff;
+        
+        if (updateData.seatLeft < 0) {
+            throw new AppError(400, "New capacity is less than sold seats");
+        }
     }
     
     // Transform dates if present
@@ -255,7 +276,7 @@ export const deleteEvent = async (
 
     const event = await prisma.event.findUnique({ where: { id } });
 
-    if (!event) {
+    if (!event || event.deletedAt) {
       throw new AppError(404, "Event not found");
     }
 
@@ -263,9 +284,13 @@ export const deleteEvent = async (
          throw new AppError(403, "You are not authorized to delete this event");
     }
 
-    await prisma.event.delete({ where: { id } });
+    // Soft Delete
+    await prisma.event.update({
+      where: { id },
+      data: { deletedAt: new Date() }
+    });
 
-    successResponse(res, "Event deleted successfully");
+    successResponse(res, "Event deleted successfully (soft delete)");
   } catch (error) {
     logger.error(`Error deleting event with id ${req.params.id}`, error);
     next(error);

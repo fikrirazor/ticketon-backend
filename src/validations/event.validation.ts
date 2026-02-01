@@ -1,5 +1,7 @@
 import * as yup from "yup";
 
+const categories = ["MUSIC", "NIGHTLIFE", "WORKSHOP", "FOOD", "ARTS", "SPORTS", "TECH"];
+
 export const createEventSchema = yup.object().shape({
   title: yup.string().required("Title is required").min(3, "Title must be at least 3 characters"),
   description: yup.string().required("Description is required").min(10, "Description must be at least 10 characters"),
@@ -31,8 +33,8 @@ export const createEventSchema = yup.object().shape({
     .required("Total seats is required")
     .min(1, "Total seats must be at least 1")
     .integer("Total seats must be an integer"),
-  category: yup.string().required("Category is required"),
-  imageUrl: yup.string().url("Image URL must be a valid URL").nullable(),
+  category: yup.string().oneOf(categories, "Invalid category").required("Category is required"),
+  imageUrl: yup.string().url("Image URL must be a valid URL").nullable().notRequired(),
   isPromoted: yup.boolean().default(false),
 });
 
@@ -46,8 +48,8 @@ export const updateEventSchema = yup.object().shape({
   price: yup.number().min(0),
   seatTotal: yup.number().min(1).integer(),
   seatLeft: yup.number().min(0).integer(),
-  category: yup.string(),
-  imageUrl: yup.string().url().nullable(),
+  category: yup.string().oneOf(categories, "Invalid category"),
+  imageUrl: yup.string().url("Image URL must be a valid URL").nullable().notRequired(),
   isPromoted: yup.boolean(),
 });
 

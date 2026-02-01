@@ -32,7 +32,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Organizer\",\n  \"email\": \"organizer@test.com\",\n  \"password\": \"Password123\",\n  \"confirmPassword\": \"Password123\"\n}"
+              "raw": "{\n  \"name\": \"Test Organizer\",\n  \"email\": \"organizer@test.com\",\n  \"password\": \"Password123\",\n  \"confirmPassword\": \"Password123\",\n  \"role\": \"ORGANIZER\",\n  \"referredBy\": \"REFERRAL_CODE_HERE\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
@@ -113,7 +113,7 @@
               "query": [
                 {
                   "key": "category",
-                  "value": "Music"
+                  "value": "MUSIC"
                 }
               ]
             }
@@ -167,7 +167,7 @@
               "query": [
                 {
                   "key": "category",
-                  "value": "Music"
+                  "value": "MUSIC"
                 },
                 {
                   "key": "location",
@@ -222,7 +222,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Rock Concert 2026\",\n  \"description\": \"Amazing rock concert featuring top bands\",\n  \"location\": \"Jakarta Convention Center\",\n  \"startDate\": \"2026-03-15T19:00:00Z\",\n  \"endDate\": \"2026-03-15T23:00:00Z\",\n  \"price\": 500000,\n  \"seatTotal\": 1000,\n  \"category\": \"Music\",\n  \"imageUrl\": \"https://example.com/concert.jpg\",\n  \"isPromoted\": true\n}"
+              "raw": "{\n  \"title\": \"Rock Concert 2026\",\n  \"description\": \"Amazing rock concert featuring top bands\",\n  \"locationId\": 1,\n  \"location\": \"Jakarta\",\n  \"address\": \"Jakarta Convention Center\",\n  \"startDate\": \"2026-03-15T19:00:00Z\",\n  \"endDate\": \"2026-03-15T23:00:00Z\",\n  \"price\": 500000,\n  \"seatTotal\": 1000,\n  \"category\": \"MUSIC\",\n  \"imageUrl\": \"https://example.com/concert.jpg\",\n  \"isPromoted\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/events",
@@ -444,7 +444,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"eventId\": \"EVENT_ID_HERE\",\n  \"voucherId\": \"VOUCHER_ID_HERE\",\n  \"pointsUsed\": 0,\n  \"items\": [\n    {\n      \"quantity\": 1\n    }\n  ]\n}"
+              "raw": "{\n  \"eventId\": \"EVENT_ID_HERE\",\n  \"voucherId\": \"VOUCHER_ID_HERE\",\n  \"couponId\": \"COUPON_ID_HERE\",\n  \"pointsUsed\": 0,\n  \"items\": [\n    {\n      \"quantity\": 1\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/transactions",

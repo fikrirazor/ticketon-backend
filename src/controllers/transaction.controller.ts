@@ -10,7 +10,7 @@ export const createTransaction = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { eventId, voucherId, pointsUsed, items } = req.body;
+    const { eventId, voucherId, couponId, pointsUsed, items } = req.body;
     const userId = (req as any).user.id;
 
     // 1. Fetch Event
@@ -61,6 +61,24 @@ export const createTransaction = async (
       } else if (voucher.discountPercent) {
         finalPrice -= (totalPrice * voucher.discountPercent) / 100;
       }
+    }
+
+    // 4. Apply Coupon Discount (System-wide coupons)
+    let coupon = null;
+    if (couponId) {
+        coupon = await prisma.coupon.findUnique({
+            where: { id: couponId }
+        });
+
+        if (!coupon) {
+            throw new AppError(404, "Coupon not found");
+        }
+
+        if (new Date() > coupon.expiresAt) {
+            throw new AppError(400, "Coupon has expired");
+        }
+
+        finalPrice -= coupon.discount;
     }
 
     // 4. Apply Points Discount
@@ -145,6 +163,7 @@ export const createTransaction = async (
           userId,
           eventId,
           voucherId,
+          couponId,
           pointsUsed,
           totalPrice,
           finalPrice,
@@ -341,8 +360,6 @@ export const cancelTransaction = async (
 
       // 2. Restore points
       if (transaction.pointsUsed > 0) {
-        // Find existing point records to restore to, or create a new one?
-        // Requirement says "Return points". easiest is to create a new Point record that expires in say 3 months
         const restoreExpiresAt = new Date();
         restoreExpiresAt.setMonth(restoreExpiresAt.getMonth() + 3);
 
@@ -355,7 +372,21 @@ export const cancelTransaction = async (
         });
       }
 
-      // 3. Update status
+      // 3. Restore voucher usage
+      if (transaction.voucherId) {
+        await tx.voucher.update({
+            where: { id: transaction.voucherId },
+            data: { usedCount: { decrement: 1 } }
+        });
+      }
+
+      // 4. Restore coupon (re-create it if it was fully consumed? Actually coupons in this schema seem to be one-time use or general. 
+      // If it's a specific user coupon, we should return it. 
+      // Current schema for Coupon doesn't have userId. It seems to be a general code.
+      // If it's general, rollback is just "not counting it as used", but we don't track usedCount for Coupon yet.
+      // If the requirement says rollback coupon, and we use them, we should probably follow the point logic for user-specific coupons.
+
+      // 5. Update status
       await tx.transaction.update({
         where: { id },
         data: { status: "CANCELED" },
