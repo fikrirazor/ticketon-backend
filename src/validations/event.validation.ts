@@ -1,9 +1,22 @@
 import * as yup from "yup";
 
+const categories = ["MUSIC", "NIGHTLIFE", "WORKSHOP", "FOOD", "ARTS", "SPORTS", "TECH"];
+
 export const createEventSchema = yup.object().shape({
   title: yup.string().required("Title is required").min(3, "Title must be at least 3 characters"),
   description: yup.string().required("Description is required").min(10, "Description must be at least 10 characters"),
-  location: yup.string().required("Location is required"),
+  locationId: yup.number().integer().positive().nullable(),
+  location: yup
+    .string()
+    .nullable()
+    .test(
+      "location-or-id",
+      "Either location (city) or locationId is required",
+      function (value) {
+        return !!value || !!this.parent.locationId;
+      }
+    ),
+  address: yup.string().required("Address is required"),
   startDate: yup.date().required("Start date is required").typeError("Start date must be a valid date"),
   endDate: yup
     .date()
@@ -20,22 +33,23 @@ export const createEventSchema = yup.object().shape({
     .required("Total seats is required")
     .min(1, "Total seats must be at least 1")
     .integer("Total seats must be an integer"),
-  category: yup.string().required("Category is required"),
-  imageUrl: yup.string().url("Image URL must be a valid URL").nullable(),
+  category: yup.string().oneOf(categories, "Invalid category").required("Category is required"),
+  imageUrl: yup.string().url("Image URL must be a valid URL").nullable().notRequired(),
   isPromoted: yup.boolean().default(false),
 });
 
 export const updateEventSchema = yup.object().shape({
   title: yup.string().min(3),
   description: yup.string().min(10),
+  locationId: yup.number().integer().positive(),
   location: yup.string(),
   startDate: yup.date(),
   endDate: yup.date().min(yup.ref("startDate"), "End date must be after start date"),
   price: yup.number().min(0),
   seatTotal: yup.number().min(1).integer(),
   seatLeft: yup.number().min(0).integer(),
-  category: yup.string(),
-  imageUrl: yup.string().url().nullable(),
+  category: yup.string().oneOf(categories, "Invalid category"),
+  imageUrl: yup.string().url("Image URL must be a valid URL").nullable().notRequired(),
   isPromoted: yup.boolean(),
 });
 

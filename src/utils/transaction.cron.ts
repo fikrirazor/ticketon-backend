@@ -3,42 +3,33 @@ import prisma from "../config/database";
 import { logger } from "./logger";
 
 export const initTransactionCron = () => {
-  // Run every 10 minutes
+  // Run every 10 minutes to check for both 2-hour and 3-day expirations
   cron.schedule("*/10 * * * *", async () => {
-    logger.info("Running Transaction Auto-Expire Cron Job...");
+    logger.info("Running Transaction Auto-Expirations Cron Job...");
 
     try {
-      const expiredTransactions = await prisma.transaction.findMany({
+      // 1. Handle WAITING_PAYMENT auto-expire (> 2 hours)
+      const expiredWaitingPayment = await prisma.transaction.findMany({
         where: {
           status: "WAITING_PAYMENT",
           expiresAt: { lt: new Date() },
         },
-        include: {
-          items: true,
-        },
+        include: { items: true },
       });
 
-      if (expiredTransactions.length === 0) {
-        logger.info("No expired transactions found.");
-        return;
-      }
-
-      logger.info(`Found ${expiredTransactions.length} expired transactions.`);
-
-      for (const transaction of expiredTransactions) {
+      for (const transaction of expiredWaitingPayment) {
         await prisma.$transaction(async (tx) => {
-          // 1. Restore seats
+          // Restore seats
           const quantity = transaction.items.reduce((sum, item) => sum + item.quantity, 0);
           await tx.event.update({
             where: { id: transaction.eventId },
             data: { seatLeft: { increment: quantity } },
           });
 
-          // 2. Restore points
+          // Restore points
           if (transaction.pointsUsed > 0) {
             const restoreExpiresAt = new Date();
             restoreExpiresAt.setMonth(restoreExpiresAt.getMonth() + 3);
-
             await tx.point.create({
               data: {
                 userId: transaction.userId,
@@ -48,17 +39,78 @@ export const initTransactionCron = () => {
             });
           }
 
-          // 3. Update status to EXPIRED
+          // Restore Voucher
+          if (transaction.voucherId) {
+            await tx.voucher.update({
+              where: { id: transaction.voucherId },
+              data: { usedCount: { decrement: 1 } },
+            });
+          }
+
+          // Update status to EXPIRED
           await tx.transaction.update({
             where: { id: transaction.id },
             data: { status: "EXPIRED" },
           });
 
-          logger.info(`Transaction ${transaction.id} has been expired and resources restored.`);
+          logger.info(`Transaction ${transaction.id} (WAITING_PAYMENT) has been expired.`);
         });
       }
+
+      // 2. Handle WAITING_ADMIN auto-cancel (> 3 days)
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+      const staleWaitingAdmin = await prisma.transaction.findMany({
+        where: {
+          status: "WAITING_ADMIN",
+          updatedAt: { lt: threeDaysAgo },
+        },
+        include: { items: true },
+      });
+
+      for (const transaction of staleWaitingAdmin) {
+        await prisma.$transaction(async (tx) => {
+          // Restore seats
+          const quantity = transaction.items.reduce((sum, item) => sum + item.quantity, 0);
+          await tx.event.update({
+            where: { id: transaction.eventId },
+            data: { seatLeft: { increment: quantity } },
+          });
+
+          // Restore points
+          if (transaction.pointsUsed > 0) {
+            const restoreExpiresAt = new Date();
+            restoreExpiresAt.setMonth(restoreExpiresAt.getMonth() + 3);
+            await tx.point.create({
+              data: {
+                userId: transaction.userId,
+                amount: transaction.pointsUsed,
+                expiresAt: restoreExpiresAt,
+              },
+            });
+          }
+
+          // Restore Voucher
+          if (transaction.voucherId) {
+            await tx.voucher.update({
+              where: { id: transaction.voucherId },
+              data: { usedCount: { decrement: 1 } },
+            });
+          }
+
+          // Update status to CANCELED
+          await tx.transaction.update({
+            where: { id: transaction.id },
+            data: { status: "CANCELED" },
+          });
+
+          logger.info(`Transaction ${transaction.id} (WAITING_ADMIN) auto-canceled after 3 days.`);
+        });
+      }
+
     } catch (error) {
-      logger.error("Error in Transaction Auto-Expire Cron Job:", error);
+      logger.error("Error in Transaction Auto-Expirations Cron Job:", error);
     }
   });
 };

@@ -11,10 +11,21 @@ export const signUp = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, referredBy } = req.body;
     console.log("req.body", req.body);
 
-    // Check if user already exists
+    // 1. Check if referrer exists if code provided
+    let referrerId = null;
+    if (referredBy) {
+        const referrer = await prisma.user.findUnique({
+            where: { referralCode: referredBy }
+        });
+        if (referrer) {
+            referrerId = referrer.id;
+        }
+    }
+
+    // 2. Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -23,10 +34,10 @@ export const signUp = async (
       throw new AppError(409, "User with this email already exists");
     }
 
-    // Hash password
+    // 3. Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // 4. Create user
     const user = await prisma.user.create({
       data: {
         name,
@@ -34,6 +45,7 @@ export const signUp = async (
         password: hashedPassword,
         role: role || "CUSTOMER",
         referralCode: generateReferralCode(),
+        referredById: referrerId,
       },
       select: {
         id: true,
@@ -42,6 +54,7 @@ export const signUp = async (
         role: true,
         referralCode: true,
         referredById: true,
+        ratingSummary: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -106,6 +119,7 @@ export const signIn = async (
           email: user.email,
           role: user.role,
           referralCode: user.referralCode,
+          ratingSummary: (user as any).ratingSummary ?? 0,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },
