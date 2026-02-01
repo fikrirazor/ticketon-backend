@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output = "../src/generated/prisma"
 }
 
@@ -15,9 +15,14 @@ enum Role {
   ORGANIZER
 }
 
-enum EventType {
-  FREE
-  PAID
+enum EventCategory {
+  MUSIC
+  NIGHTLIFE
+  WORKSHOP
+  FOOD
+  ARTS
+  SPORTS
+  TECH
 }
 
 enum TransactionStatus {
@@ -50,25 +55,34 @@ model User {
   reviews      Review[]
 }
 
+model Location {
+  id     Int     @id @default(autoincrement())
+  city   String  @unique
+  events Event[]
+}
+
 model Event {
   id          String   @id @default(uuid())
   organizerId String
+  locationId  Int
   title       String
   description String
-  location    String
+  address     String
   startDate   DateTime
   endDate     DateTime
   price       Int      // IDR
   seatTotal   Int
   seatLeft    Int
-  category    String
+  category    EventCategory
   imageUrl    String?
   isPromoted  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
   rating      Float    @default(0)
 
   organizer   User     @relation(fields: [organizerId], references: [id])
+  location    Location @relation(fields: [locationId], references: [id])
   transactions Transaction[]
   vouchers    Voucher[]
   reviews     Review[]
@@ -79,10 +93,11 @@ model Transaction {
   userId          String
   eventId         String
   voucherId       String?
+  couponId        String?
   pointsUsed      Int                @default(0)
   totalPrice      Int
   finalPrice      Int
-  status          TransactionStatus
+  status          TransactionStatus  @default(WAITING_PAYMENT)
   paymentProofUrl String?
   expiresAt       DateTime
   createdAt       DateTime           @default(now())
@@ -91,6 +106,7 @@ model Transaction {
   user            User               @relation(fields: [userId], references: [id])
   event           Event              @relation(fields: [eventId], references: [id])
   voucher         Voucher?           @relation(fields: [voucherId], references: [id])
+  coupon          Coupon?            @relation(fields: [couponId], references: [id])
   items           TransactionItem[]
 }
 
@@ -135,6 +151,8 @@ model Coupon {
   discount  Int
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  transactions Transaction[]
 }
 
 model Review {

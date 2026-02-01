@@ -42,6 +42,7 @@ export const authMiddleware = async (
         referredById: true,
         createdAt: true,
         updatedAt: true,
+        ratingSummary: true,
       },
     });
 

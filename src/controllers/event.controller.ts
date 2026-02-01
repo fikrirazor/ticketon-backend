@@ -22,16 +22,18 @@ export const getEvents = async (
 
     const { skip, take } = getPagination(page, limit);
 
-    const where: any = {};
+    const where: any = {
+      deletedAt: null
+    };
 
     if (category) {
       where.category = category as string;
     }
 
+    // Filter by related Location.city instead of a non-existent `location` string on Event
     if (location) {
       where.location = {
-        contains: location as string,
-        mode: "insensitive",
+        city: { contains: location as string, mode: "insensitive" },
       };
     }
 
@@ -56,6 +58,12 @@ export const getEvents = async (
                     id: true,
                     name: true,
                     email: true
+                }
+            },
+            location: {
+                select: {
+                  id: true,
+                  city: true
                 }
             }
         }
@@ -85,8 +93,8 @@ export const getEventById = async (
   try {
     const { id } = req.params;
 
-    const event = await prisma.event.findUnique({
-      where: { id },
+    const event = await prisma.event.findFirst({
+      where: { id, deletedAt: null },
       include: {
         organizer: {
             select: {
@@ -94,6 +102,9 @@ export const getEventById = async (
                 name: true,
                 email: true
             }
+        },
+        location: {
+          select: { id: true, city: true }
         }
     }
     });
@@ -115,19 +126,51 @@ export const createEvent = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { title, description, location, startDate, endDate, price, seatTotal, category, imageUrl: bodyImageUrl, isPromoted } = req.body;
+    // support both locationId (int) or location (city string) + address
+    const {
+      title,
+      description,
+      locationId,
+      location: locationCity,
+      address,
+      startDate,
+      endDate,
+      price,
+      seatTotal,
+      category,
+      imageUrl: bodyImageUrl,
+      isPromoted,
+    } = req.body;
+
     const imageUrl = (req as any).file?.path || bodyImageUrl;
-    
-    // Assumes authMiddleware attaches user to req.user (and organizer only check if implemented there, or role check needed here?)
-    // Requirement says "protected, organizer only". authMiddleware checks validity but maybe not role.
-    // I will assume simple Role check if User model has role. User model from schema has Role enum.
-    
+
     const user = (req as any).user;
     if (user.role !== "ORGANIZER") {
-        throw new AppError(403, "Access denied. Only organizers can create events.");
+      throw new AppError(403, "Access denied. Only organizers can create events.");
     }
 
-    // Convert string values to numbers (from frontend form data)
+    // address is required now
+    if (!address) {
+      throw new AppError(400, "Address is required for an event");
+    }
+
+    // Resolve Location: prefer explicit locationId, otherwise find/create by city
+    let locationIdToUse: number | undefined;
+    if (locationId) {
+      locationIdToUse = parseInt(locationId as any);
+    } else if (locationCity) {
+      const city = (locationCity as string).trim();
+      let locationRecord = await prisma.location.findUnique({ where: { city } });
+      if (!locationRecord) {
+        locationRecord = await prisma.location.create({ data: { city } });
+      }
+      locationIdToUse = locationRecord.id;
+    }
+
+    if (!locationIdToUse) {
+      throw new AppError(400, "Location or locationId is required");
+    }
+
     const priceInt = parseInt(price as any);
     const seatTotalInt = parseInt(seatTotal as any);
 
@@ -135,7 +178,7 @@ export const createEvent = async (
       data: {
         title,
         description,
-        location,
+        address,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         price: priceInt,
@@ -145,6 +188,7 @@ export const createEvent = async (
         imageUrl,
         isPromoted: isPromoted || false,
         organizerId: user.id,
+        locationId: locationIdToUse,
       },
     });
 
@@ -167,17 +211,47 @@ export const updateEvent = async (
 
     const event = await prisma.event.findUnique({ where: { id } });
 
-    if (!event) {
+    if (!event || event.deletedAt) {
       throw new AppError(404, "Event not found");
     }
 
     if (event.organizerId !== user.id) {
         throw new AppError(403, "You are not authorized to update this event");
     }
+
+    // If updating capacity, check if there are any transactions
+    if (updateData.seatTotal !== undefined && updateData.seatTotal !== event.seatTotal) {
+        const transactionCount = await prisma.transaction.count({
+            where: { eventId: id }
+        });
+
+        if (transactionCount > 0) {
+            throw new AppError(400, "Cannot change capacity because transactions already exist for this event");
+        }
+        
+        // Update seatLeft as well if seatTotal changes
+        const diff = updateData.seatTotal - event.seatTotal;
+        updateData.seatLeft = event.seatLeft + diff;
+        
+        if (updateData.seatLeft < 0) {
+            throw new AppError(400, "New capacity is less than sold seats");
+        }
+    }
     
     // Transform dates if present
     if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
     if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
+
+    // Handle update of location by city string (create if necessary)
+    if (updateData.location) {
+      const city = (updateData.location as string).trim();
+      let locationRecord = await prisma.location.findUnique({ where: { city } });
+      if (!locationRecord) {
+        locationRecord = await prisma.location.create({ data: { city } });
+      }
+      updateData.locationId = locationRecord.id;
+      delete updateData.location;
+    }
 
     const updatedEvent = await prisma.event.update({
       where: { id },
@@ -202,7 +276,7 @@ export const deleteEvent = async (
 
     const event = await prisma.event.findUnique({ where: { id } });
 
-    if (!event) {
+    if (!event || event.deletedAt) {
       throw new AppError(404, "Event not found");
     }
 
@@ -210,9 +284,13 @@ export const deleteEvent = async (
          throw new AppError(403, "You are not authorized to delete this event");
     }
 
-    await prisma.event.delete({ where: { id } });
+    // Soft Delete
+    await prisma.event.update({
+      where: { id },
+      data: { deletedAt: new Date() }
+    });
 
-    successResponse(res, "Event deleted successfully");
+    successResponse(res, "Event deleted successfully (soft delete)");
   } catch (error) {
     logger.error(`Error deleting event with id ${req.params.id}`, error);
     next(error);
