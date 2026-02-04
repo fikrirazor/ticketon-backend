@@ -45,6 +45,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   ratingSummary Float    @default(0)
+  avatarUrl     String?
 
   referredBy   User?    @relation("ReferralRelation", fields: [referredById], references: [id])
   referrals    User[]   @relation("ReferralRelation")

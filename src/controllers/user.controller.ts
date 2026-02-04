@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { AppError } from "../utils/error";
+import { hashPassword } from "../utils/password.util";
 
 export const getProfile = async (
   req: Request,
@@ -16,7 +17,10 @@ export const getProfile = async (
       where: { id: req.user.id },
       select: {
         id: true,
+        name: true,
         email: true,
+        role: true,
+        avatarUrl: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -30,6 +34,52 @@ export const getProfile = async (
       success: true,
       message: "Profile retrieved successfully",
       data: { user },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const { name, email, password } = req.body;
+    const avatarUrl = (req as any).file ? `/${(req as any).file.path.replace(/\\/g, "/")}` : undefined;
+
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (avatarUrl) updateData.avatarUrl = avatarUrl;
+
+    if (password) {
+      updateData.password = await hashPassword(password);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        avatarUrl: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: { user: updatedUser },
     });
   } catch (error) {
     next(error);
@@ -51,6 +101,7 @@ export const getAllUsers = async (
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
         createdAt: true,
         updatedAt: true,
       },
