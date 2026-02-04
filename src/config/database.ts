@@ -1,6 +1,7 @@
+// Re-fetching prisma client
 import { PrismaPg } from "@prisma/adapter-pg";
 import config from "../config/env";
-import { PrismaClient } from "../generated/prisma/client";
+import { PrismaClient } from "../generated/prisma";
 
 // Create a singleton instance of PrismaClient
 const prismaClientSingleton = () => {
