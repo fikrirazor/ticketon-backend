@@ -5,6 +5,7 @@ import eventRoutes from "./event.routes";
 import voucherRoutes from "./voucher.routes";
 import transactionRoutes from "./transaction.routes";
 import reviewRoutes from "./review.routes";
+import organizerRoutes from "./organizer.routes";
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use("/events", eventRoutes);
 router.use("/vouchers", voucherRoutes);
 router.use("/transactions", transactionRoutes);
 router.use("/reviews", reviewRoutes);
+router.use("/organizer", organizerRoutes);
 
 export default router;
