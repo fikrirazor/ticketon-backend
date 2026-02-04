@@ -1,0 +1,475 @@
+{
+  "info": {
+    "name": "Ticketon API",
+    "description": "API collection for Ticketon backend - Event ticketing platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "eventId",
+      "value": ""
+    },
+    {
+      "key": "transactionId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "Check if server is running"
+          }
+        },
+        {
+          "name": "Sign Up (Customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data?.token) {",
+                  "        pm.collectionVariables.set('token', json.data.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Customer\",\n  \"email\": \"customer@test.com\",\n  \"password\": \"Password123\",\n  \"confirmPassword\": \"Password123\",\n  \"role\": \"CUSTOMER\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/signup",
+            "description": "Register new customer. Token auto-saved."
+          }
+        },
+        {
+          "name": "Sign Up (Organizer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data?.token) {",
+                  "        pm.collectionVariables.set('token', json.data.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Organizer\",\n  \"email\": \"organizer@test.com\",\n  \"password\": \"Password123\",\n  \"confirmPassword\": \"Password123\",\n  \"role\": \"ORGANIZER\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/signup",
+            "description": "Register new organizer. Token auto-saved."
+          }
+        },
+        {
+          "name": "Sign In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data?.token) {",
+                  "        pm.collectionVariables.set('token', json.data.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@test.com\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/signin",
+            "description": "Sign in. Token auto-saved to collection variable."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/users/profile",
+            "description": "Get current user profile (auth required)"
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users",
+            "description": "Get all users (public)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "category", "value": ""},
+                {"key": "location", "value": ""},
+                {"key": "search", "value": ""}
+              ]
+            },
+            "description": "Public. Optional: category, location, search."
+          }
+        },
+        {
+          "name": "Get Event By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}",
+            "description": "Public. Set eventId in collection variables or replace in URL."
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/x-www-form-urlencoded"}
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "title", "value": "Test Event 2025"},
+                {"key": "description", "value": "A great music event for testing"},
+                {"key": "address", "value": "Jakarta Convention Center"},
+                {"key": "location", "value": "Jakarta"},
+                {"key": "startDate", "value": "2025-12-01T10:00:00.000Z"},
+                {"key": "endDate", "value": "2025-12-01T18:00:00.000Z"},
+                {"key": "price", "value": "100000"},
+                {"key": "seatTotal", "value": "100"},
+                {"key": "category", "value": "MUSIC"},
+                {"key": "image", "type": "file", "src": ""}
+              ]
+            },
+            "url": "{{baseUrl}}/events",
+            "description": "Auth: Organizer required. Location auto-created by city name."
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Event Title\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": "{{baseUrl}}/events/{{eventId}}",
+            "description": "Auth: Event organizer only."
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/events/{{eventId}}",
+            "description": "Auth: Event organizer only. Soft delete."
+          }
+        },
+        {
+          "name": "Create Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"DISCOUNT20\",\n  \"discountAmount\": 20000,\n  \"maxUsage\": 100,\n  \"startDate\": \"2025-12-01T00:00:00.000Z\",\n  \"endDate\": \"2025-12-31T23:59:59.000Z\"\n}"
+            },
+            "url": "{{baseUrl}}/events/{{eventId}}/vouchers",
+            "description": "Auth: Event organizer. Use discountAmount OR discountPercent."
+          }
+        },
+        {
+          "name": "Get Event Vouchers",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/events/{{eventId}}/vouchers",
+            "description": "Auth required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vouchers",
+      "item": [
+        {
+          "name": "Validate Voucher",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/vouchers/:code/validate",
+            "urlPathParams": {"code": "DISCOUNT20"},
+            "description": "Public. Replace :code with voucher code."
+          }
+        },
+        {
+          "name": "Update Voucher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxUsage\": 150\n}"
+            },
+            "url": "{{baseUrl}}/vouchers/:id",
+            "urlPathParams": {"id": "VOUCHER_UUID"},
+            "description": "Auth: Voucher owner (event organizer)."
+          }
+        },
+        {
+          "name": "Delete Voucher",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/vouchers/:id",
+            "urlPathParams": {"id": "VOUCHER_UUID"}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Get My Transactions",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/me?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "me"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Transaction By ID",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/transactions/{{transactionId}}",
+            "description": "Owner or Event Organizer only."
+          }
+        },
+        {
+          "name": "Create Transaction",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.data?.id) {",
+                  "        pm.collectionVariables.set('transactionId', json.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"items\": [{\"quantity\": 2}],\n  \"pointsUsed\": 0,\n  \"voucherId\": null\n}"
+            },
+            "url": "{{baseUrl}}/transactions",
+            "description": "Set eventId first. Transaction ID auto-saved on success."
+          }
+        },
+        {
+          "name": "Submit Payment Proof (URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentProofUrl\": \"https://example.com/payment-proof.jpg\"\n}"
+            },
+            "url": "{{baseUrl}}/transactions/{{transactionId}}/payment-proof",
+            "description": "Submit payment proof URL (Cloudinary, Imgur, etc.)"
+          }
+        },
+        {
+          "name": "Cancel Transaction",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/transactions/{{transactionId}}/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Get Event Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/events/{{eventId}}?page=1&limit=10&sortBy=newest",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "events", "{{eventId}}"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "sortBy", "value": "newest"}
+              ]
+            },
+            "description": "Public. sortBy: newest | highest | lowest"
+          }
+        },
+        {
+          "name": "Get Organizer Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/organizers/:organizerId?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["reviews", "organizers", ":organizerId"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            },
+            "urlPathParams": {"organizerId": "ORGANIZER_UUID"}
+          }
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great event!\"\n}"
+            },
+            "url": "{{baseUrl}}/reviews/events/{{eventId}}",
+            "description": "Auth: Customer who attended (DONE transaction). Rating 1-5."
+          }
+        },
+        {
+          "name": "Get My Eligible Reviews",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/reviews/me/eligible",
+            "description": "Events user can review (DONE transactions)."
+          }
+        },
+        {
+          "name": "Update Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated comment\"\n}"
+            },
+            "url": "{{baseUrl}}/reviews/:id",
+            "urlPathParams": {"id": "REVIEW_UUID"}
+          }
+        },
+        {
+          "name": "Delete Review",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/reviews/:id",
+            "urlPathParams": {"id": "REVIEW_UUID"}
+          }
+        }
+      ]
+    }
+  ]
+}

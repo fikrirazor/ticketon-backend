@@ -1,4 +1,5 @@
 import express, { Application } from "express";
+import path from "path";
 import cors from "cors";
 import helmet from "helmet";
 import routes from "./routes";
@@ -8,6 +9,9 @@ const app: Application = express();
 
 // Security middleware
 app.use(helmet());
+
+// Serve uploaded files (e.g. payment proofs, event images)
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // CORS configuration
 app.use(

@@ -220,12 +220,11 @@ export const getTransactionById = async (
       throw new AppError(404, "Transaction not found");
     }
 
-    if (transaction.userId !== userId && (req as any).user.role !== "ORGANIZER") {
-         // If organizer of the event, they should be able to see it too
-         const event = await prisma.event.findUnique({ where: { id: transaction.eventId } });
-         if (event?.organizerId !== userId) {
-            throw new AppError(403, "Not authorized to view this transaction");
-         }
+    const event = transaction.event;
+    const isOwner = transaction.userId === userId;
+    const isEventOrganizer = event?.organizerId === userId;
+    if (!isOwner && !isEventOrganizer) {
+      throw new AppError(403, "Not authorized to view this transaction");
     }
 
     successResponse(res, "Transaction retrieved successfully", transaction);
@@ -281,10 +280,10 @@ export const uploadPaymentProof = async (
   try {
     const { id } = req.params;
     const userId = (req as any).user.id;
-    const paymentProofUrl = (req as any).file?.path; // Assuming multer middleware is used
+    const { paymentProofUrl } = req.body;
 
     if (!paymentProofUrl) {
-      throw new AppError(400, "Payment proof file is required");
+      throw new AppError(400, "Payment proof URL is required");
     }
 
     const transaction = await prisma.transaction.findUnique({
@@ -316,7 +315,7 @@ export const uploadPaymentProof = async (
       },
     });
 
-    successResponse(res, "Payment proof uploaded successfully. Waiting for admin verification.", updatedTransaction);
+    successResponse(res, "Payment proof submitted successfully. Waiting for admin verification.", updatedTransaction);
   } catch (error) {
     logger.error(`Error uploading payment proof for transaction ${req.params.id}`, error);
     next(error);
@@ -358,11 +357,9 @@ export const cancelTransaction = async (
         data: { seatLeft: { increment: quantity } },
       });
 
-      // 2. Restore points
+      // 2. Restore points (add 90 days to avoid setMonth overflow on month-end)
       if (transaction.pointsUsed > 0) {
-        const restoreExpiresAt = new Date();
-        restoreExpiresAt.setMonth(restoreExpiresAt.getMonth() + 3);
-
+        const restoreExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
         await tx.point.create({
           data: {
             userId: transaction.userId,

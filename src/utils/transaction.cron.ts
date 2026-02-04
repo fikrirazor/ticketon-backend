@@ -26,10 +26,9 @@ export const initTransactionCron = () => {
             data: { seatLeft: { increment: quantity } },
           });
 
-          // Restore points
+          // Restore points (add 90 days to avoid setMonth overflow on month-end)
           if (transaction.pointsUsed > 0) {
-            const restoreExpiresAt = new Date();
-            restoreExpiresAt.setMonth(restoreExpiresAt.getMonth() + 3);
+            const restoreExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
             await tx.point.create({
               data: {
                 userId: transaction.userId,
@@ -78,10 +77,9 @@ export const initTransactionCron = () => {
             data: { seatLeft: { increment: quantity } },
           });
 
-          // Restore points
+          // Restore points (add 90 days to avoid setMonth overflow on month-end)
           if (transaction.pointsUsed > 0) {
-            const restoreExpiresAt = new Date();
-            restoreExpiresAt.setMonth(restoreExpiresAt.getMonth() + 3);
+            const restoreExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
             await tx.point.create({
               data: {
                 userId: transaction.userId,
