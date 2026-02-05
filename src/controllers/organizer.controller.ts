@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { successResponse } from "../utils/apiResponse";
-import { AppError } from "../utils/error";
 
 export const getDashboardStats = async (
     req: Request,
@@ -16,7 +15,7 @@ export const getDashboardStats = async (
             where: { organizerId, deletedAt: null },
             include: {
                 transactions: {
-                    where: { status: "SUCCESS" },
+                    where: { status: "DONE" },
                     select: { finalPrice: true, items: { select: { quantity: true } } }
                 }
             }
@@ -26,10 +25,10 @@ export const getDashboardStats = async (
         let totalRevenue = 0;
         let totalTicketsSold = 0;
 
-        events.forEach(event => {
-            event.transactions.forEach(tx => {
+        events.forEach((event: any) => {
+            event.transactions.forEach((tx: any) => {
                 totalRevenue += tx.finalPrice;
-                tx.items.forEach(item => {
+                tx.items.forEach((item: any) => {
                     totalTicketsSold += item.quantity;
                 });
             });
@@ -55,6 +54,7 @@ export const getOrganizerEvents = async (
 ): Promise<void> => {
     try {
         const organizerId = (req as any).user.id;
+
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const skip = (page - 1) * limit;
@@ -68,7 +68,7 @@ export const getOrganizerEvents = async (
                 include: {
                     location: { select: { city: true } },
                     _count: {
-                        select: { transactions: { where: { status: "SUCCESS" } } }
+                        select: { transactions: { where: { status: "DONE" } } }
                     }
                 }
             }),
