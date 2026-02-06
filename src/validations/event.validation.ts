@@ -48,6 +48,7 @@ export const updateEventSchema = yup.object().shape({
   price: yup.number().min(0),
   seatTotal: yup.number().min(1).integer(),
   seatLeft: yup.number().min(0).integer(),
+  address: yup.string(),
   category: yup.string().oneOf(categories, "Invalid category"),
   imageUrl: yup.string().url("Image URL must be a valid URL").nullable().notRequired(),
   isPromoted: yup.boolean(),
