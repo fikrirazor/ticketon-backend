@@ -11,8 +11,8 @@ import { validate } from "../middleware/validation.middleware";
 import {
   createTransactionSchema,
   uploadPaymentProofSchema,
+  submitPaymentProofSchema,
 } from "../validations/transaction.validation";
-import { upload } from "../middleware/upload.middleware";
 
 const router = Router();
 
@@ -22,12 +22,8 @@ router.post("/", authMiddleware, validate(createTransactionSchema), createTransa
 router.post(
   "/:id/payment-proof",
   authMiddleware,
-  (req, _res, next) => {
-    (req as any).uploadDir = "payment-proofs";
-    next();
-  },
-  upload.single("paymentProof"),
   validate(uploadPaymentProofSchema, "params"),
+  validate(submitPaymentProofSchema),
   uploadPaymentProof
 );
 router.put("/:id/cancel", authMiddleware, cancelTransaction);
