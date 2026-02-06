@@ -3,11 +3,17 @@ import cors from "cors";
 import helmet from "helmet";
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
+import path from "path";
 
 const app: Application = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Serve static files
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // CORS configuration
 app.use(

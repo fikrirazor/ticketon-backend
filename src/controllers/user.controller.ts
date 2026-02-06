@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../config/database";
 import { AppError } from "../utils/error";
+import { hashPassword } from "../utils/password.util";
 
 export const getProfile = async (
   req: Request,
@@ -14,22 +15,85 @@ export const getProfile = async (
 
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: {
-        id: true,
-        email: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      include: {
+        points: {
+          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } }
+        },
+        coupons: {
+          where: { expiresAt: { gt: new Date() } }
+        }
+      }
     });
 
     if (!user) {
       throw new AppError(404, "User not found");
     }
 
+    const totalPoints = user.points.reduce((sum, p) => sum + p.amount, 0);
+
     res.status(200).json({
       success: true,
       message: "Profile retrieved successfully",
-      data: { user },
+      data: {
+        user: {
+          ...user,
+          totalPoints,
+          points: undefined, // Hide raw points list if preferred, or keep it
+        }
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError(401, "Unauthorized");
+    }
+
+    const { name, email, password } = req.body;
+    const avatarUrl = (req as any).file ? `/${(req as any).file.path.replace(/\\/g, "/")}` : undefined;
+
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (avatarUrl) updateData.avatarUrl = avatarUrl;
+
+    if (password) {
+      updateData.password = await hashPassword(password);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: updateData,
+      include: {
+        points: {
+          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } }
+        },
+        coupons: {
+          where: { expiresAt: { gt: new Date() } }
+        }
+      }
+    });
+
+    const totalPoints = updatedUser.points.reduce((sum, p) => sum + p.amount, 0);
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: {
+        user: {
+          ...updatedUser,
+          totalPoints,
+          points: undefined,
+        }
+      },
     });
   } catch (error) {
     next(error);
@@ -51,6 +115,8 @@ export const getAllUsers = async (
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
+        referralCode: true,
         createdAt: true,
         updatedAt: true,
       },
