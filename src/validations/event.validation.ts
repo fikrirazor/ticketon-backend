@@ -4,20 +4,22 @@ const categories = ["MUSIC", "NIGHTLIFE", "WORKSHOP", "FOOD", "ARTS", "SPORTS", 
 
 export const createEventSchema = yup.object().shape({
   title: yup.string().required("Title is required").min(3, "Title must be at least 3 characters"),
-  description: yup.string().required("Description is required").min(10, "Description must be at least 10 characters"),
+  description: yup
+    .string()
+    .required("Description is required")
+    .min(10, "Description must be at least 10 characters"),
   locationId: yup.number().integer().positive().nullable(),
   location: yup
     .string()
     .nullable()
-    .test(
-      "location-or-id",
-      "Either location (city) or locationId is required",
-      function (value) {
-        return !!value || !!this.parent.locationId;
-      }
-    ),
+    .test("location-or-id", "Either location (city) or locationId is required", function (value) {
+      return !!value || !!this.parent.locationId;
+    }),
   address: yup.string().required("Address is required"),
-  startDate: yup.date().required("Start date is required").typeError("Start date must be a valid date"),
+  startDate: yup
+    .date()
+    .required("Start date is required")
+    .typeError("Start date must be a valid date"),
   endDate: yup
     .date()
     .required("End date is required")

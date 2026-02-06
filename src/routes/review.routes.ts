@@ -17,25 +17,15 @@ import {
 
 const router = Router();
 
-// Public/Semi-public routes (some might need auth depending on requirements, 
+// Public/Semi-public routes (some might need auth depending on requirements,
 // but GET reviews is usually public)
 router.get("/events/:eventId", validate(queryReviewSchema), getEventReviews);
 router.get("/organizers/:organizerId", validate(queryReviewSchema), getOrganizerReviews);
 
 // Protected routes
-router.post(
-  "/events/:eventId",
-  authMiddleware,
-  validate(createReviewSchema),
-  createReview
-);
+router.post("/events/:eventId", authMiddleware, validate(createReviewSchema), createReview);
 router.get("/me/eligible", authMiddleware, getEligibleReviews);
-router.put(
-  "/:id",
-  authMiddleware,
-  validate(updateReviewSchema),
-  updateReview
-);
+router.put("/:id", authMiddleware, validate(updateReviewSchema), updateReview);
 router.delete("/:id", authMiddleware, deleteReview);
 
 export default router;

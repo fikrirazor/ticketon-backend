@@ -5,11 +5,7 @@ import { generateToken } from "../utils/jwt.util";
 import { AppError } from "../utils/error";
 import { generateReferralCode } from "../utils/referral.util";
 
-export const signUp = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { name, email, password, role, referredBy } = req.body;
     console.log("req.body", req.body);
@@ -18,7 +14,7 @@ export const signUp = async (
     let referrerId = null;
     if (referredBy) {
       const referrer = await prisma.user.findUnique({
-        where: { referralCode: referredBy }
+        where: { referralCode: referredBy },
       });
       if (referrer) {
         referrerId = referrer.id;
@@ -110,11 +106,7 @@ export const signUp = async (
   }
 };
 
-export const signIn = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const signIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password } = req.body;
 
@@ -123,12 +115,12 @@ export const signIn = async (
       where: { email },
       include: {
         points: {
-          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } }
+          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } },
         },
         coupons: {
-          where: { expiresAt: { gt: new Date() } }
-        }
-      }
+          where: { expiresAt: { gt: new Date() } },
+        },
+      },
     });
 
     if (!user) {

@@ -6,10 +6,7 @@ dotenv.config();
 
 // Define the schema for environment variables
 const envSchema = yup.object({
-  NODE_ENV: yup
-    .string()
-    .oneOf(["development", "production", "test"])
-    .default("development"),
+  NODE_ENV: yup.string().oneOf(["development", "production", "test"]).default("development"),
   PORT: yup.number().positive().integer().default(8000),
   DATABASE_URL: yup.string().required("DATABASE_URL is required"),
   DIRECT_URL: yup.string().required("DIRECT_URL is required"),

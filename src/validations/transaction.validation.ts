@@ -4,11 +4,15 @@ export const createTransactionSchema = yup.object().shape({
   eventId: yup.string().uuid().required("Event ID is required"),
   voucherId: yup.string().uuid().optional().nullable(),
   pointsUsed: yup.number().integer().min(0).default(0),
-  items: yup.array().of(
-    yup.object().shape({
-      quantity: yup.number().integer().min(1).required("Quantity is required"),
-    })
-  ).min(1, "At least one item is required").required(),
+  items: yup
+    .array()
+    .of(
+      yup.object().shape({
+        quantity: yup.number().integer().min(1).required("Quantity is required"),
+      }),
+    )
+    .min(1, "At least one item is required")
+    .required(),
 });
 
 export const uploadPaymentProofSchema = yup.object().shape({
@@ -16,5 +20,8 @@ export const uploadPaymentProofSchema = yup.object().shape({
 });
 
 export const submitPaymentProofSchema = yup.object().shape({
-  paymentProofUrl: yup.string().url("Payment proof must be a valid URL").required("Payment proof URL is required"),
+  paymentProofUrl: yup
+    .string()
+    .url("Payment proof must be a valid URL")
+    .required("Payment proof URL is required"),
 });

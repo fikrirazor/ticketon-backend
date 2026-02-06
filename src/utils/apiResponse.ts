@@ -19,7 +19,7 @@ export const sendResponse = <T>(
   success: boolean,
   message: string,
   data?: T,
-  pagination?: PaginationMeta
+  pagination?: PaginationMeta,
 ) => {
   const response: ApiResponse<T> = {
     success,
@@ -34,16 +34,11 @@ export const successResponse = <T>(
   res: any,
   message: string,
   data?: T,
-  pagination?: PaginationMeta
+  pagination?: PaginationMeta,
 ) => {
   sendResponse(res, 200, true, message, data, pagination);
 };
 
-export const errorResponse = (
-  res: any,
-  statusCode: number,
-  message: string,
-  data?: any
-) => {
+export const errorResponse = (res: any, statusCode: number, message: string, data?: any) => {
   sendResponse(res, statusCode, false, message, data);
 };

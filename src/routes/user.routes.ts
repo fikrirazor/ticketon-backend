@@ -18,14 +18,14 @@ router.get("/profile", authMiddleware, getProfile);
  * @access  Private
  */
 router.put(
-    "/profile",
-    authMiddleware,
-    (req, _res, next) => {
-        (req as any).uploadDir = "avatars";
-        next();
-    },
-    upload.single("avatar"),
-    updateProfile
+  "/profile",
+  authMiddleware,
+  (req, _res, next) => {
+    (req as any).uploadDir = "avatars";
+    next();
+  },
+  upload.single("avatar"),
+  updateProfile,
 );
 
 /**

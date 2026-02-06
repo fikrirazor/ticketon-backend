@@ -7,7 +7,7 @@ import { logger } from "../utils/logger";
 export const createTransaction = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { eventId, voucherId, couponId, pointsUsed, items } = req.body;
@@ -66,19 +66,19 @@ export const createTransaction = async (
     // 4. Apply Coupon Discount (System-wide coupons)
     let coupon = null;
     if (couponId) {
-        coupon = await prisma.coupon.findUnique({
-            where: { id: couponId }
-        });
+      coupon = await prisma.coupon.findUnique({
+        where: { id: couponId },
+      });
 
-        if (!coupon) {
-            throw new AppError(404, "Coupon not found");
-        }
+      if (!coupon) {
+        throw new AppError(404, "Coupon not found");
+      }
 
-        if (new Date() > coupon.expiresAt) {
-            throw new AppError(400, "Coupon has expired");
-        }
+      if (new Date() > coupon.expiresAt) {
+        throw new AppError(400, "Coupon has expired");
+      }
 
-        finalPrice -= coupon.discount;
+      finalPrice -= coupon.discount;
     }
 
     // 4. Apply Points Discount
@@ -88,7 +88,7 @@ export const createTransaction = async (
         where: {
           userId,
           expiresAt: { gt: new Date() },
-          amount: { gt: 0 }
+          amount: { gt: 0 },
         },
         orderBy: { expiresAt: "asc" },
       });
@@ -112,11 +112,11 @@ export const createTransaction = async (
       // Re-check seats inside transaction to avoid race conditions
       const currentEvent = await tx.event.findUnique({
         where: { id: eventId },
-        select: { seatLeft: true }
+        select: { seatLeft: true },
       });
 
       if (!currentEvent || currentEvent.seatLeft < quantity) {
-         throw new AppError(400, "Not enough seats available");
+        throw new AppError(400, "Not enough seats available");
       }
 
       // Decrement seats
@@ -140,7 +140,7 @@ export const createTransaction = async (
           where: {
             userId,
             expiresAt: { gt: new Date() },
-            amount: { gt: 0 }
+            amount: { gt: 0 },
           },
           orderBy: { expiresAt: "asc" },
         });
@@ -184,7 +184,11 @@ export const createTransaction = async (
       });
     });
 
-    successResponse(res, "Transaction created successfully. Please upload payment proof within 2 hours.", transaction);
+    successResponse(
+      res,
+      "Transaction created successfully. Please upload payment proof within 2 hours.",
+      transaction,
+    );
   } catch (error) {
     logger.error("Error creating transaction", error);
     next(error);
@@ -194,7 +198,7 @@ export const createTransaction = async (
 export const getTransactionById = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -207,12 +211,12 @@ export const getTransactionById = async (
         event: true,
         voucher: true,
         user: {
-            select: {
-                id: true,
-                name: true,
-                email: true
-            }
-        }
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -237,7 +241,7 @@ export const getTransactionById = async (
 export const getUserTransactions = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;
@@ -275,7 +279,7 @@ export const getUserTransactions = async (
 export const uploadPaymentProof = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -299,7 +303,10 @@ export const uploadPaymentProof = async (
     }
 
     if (transaction.status !== "WAITING_PAYMENT") {
-      throw new AppError(400, `Cannot upload proof for transaction with status ${transaction.status}`);
+      throw new AppError(
+        400,
+        `Cannot upload proof for transaction with status ${transaction.status}`,
+      );
     }
 
     if (new Date() > transaction.expiresAt) {
@@ -315,7 +322,11 @@ export const uploadPaymentProof = async (
       },
     });
 
-    successResponse(res, "Payment proof submitted successfully. Waiting for admin verification.", updatedTransaction);
+    successResponse(
+      res,
+      "Payment proof submitted successfully. Waiting for admin verification.",
+      updatedTransaction,
+    );
   } catch (error) {
     logger.error(`Error uploading payment proof for transaction ${req.params.id}`, error);
     next(error);
@@ -325,7 +336,7 @@ export const uploadPaymentProof = async (
 export const cancelTransaction = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -333,7 +344,7 @@ export const cancelTransaction = async (
 
     const transaction = await prisma.transaction.findUnique({
       where: { id },
-      include: { items: true }
+      include: { items: true },
     });
 
     if (!transaction) {
@@ -372,13 +383,13 @@ export const cancelTransaction = async (
       // 3. Restore voucher usage
       if (transaction.voucherId) {
         await tx.voucher.update({
-            where: { id: transaction.voucherId },
-            data: { usedCount: { decrement: 1 } }
+          where: { id: transaction.voucherId },
+          data: { usedCount: { decrement: 1 } },
         });
       }
 
-      // 4. Restore coupon (re-create it if it was fully consumed? Actually coupons in this schema seem to be one-time use or general. 
-      // If it's a specific user coupon, we should return it. 
+      // 4. Restore coupon (re-create it if it was fully consumed? Actually coupons in this schema seem to be one-time use or general.
+      // If it's a specific user coupon, we should return it.
       // Current schema for Coupon doesn't have userId. It seems to be a general code.
       // If it's general, rollback is just "not counting it as used", but we don't track usedCount for Coupon yet.
       // If the requirement says rollback coupon, and we use them, we should probably follow the point logic for user-specific coupons.

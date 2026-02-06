@@ -24,7 +24,7 @@ router.post(
   authMiddleware,
   validate(uploadPaymentProofSchema, "params"),
   validate(submitPaymentProofSchema),
-  uploadPaymentProof
+  uploadPaymentProof,
 );
 router.put("/:id/cancel", authMiddleware, cancelTransaction);
 

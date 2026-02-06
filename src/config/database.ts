@@ -9,8 +9,7 @@ const prismaClientSingleton = () => {
     // Konfigurasi logging Prisma
     // Development: hanya log error dan warning (query di-disable agar tidak terlalu verbose)
     // Production: hanya log error
-    log:
-      config.nodeEnv === "development" ? ["error", "warn"] : ["error"],
+    log: config.nodeEnv === "development" ? ["error", "warn"] : ["error"],
     adapter: new PrismaPg({
       connectionString: config.databaseUrl,
     }),

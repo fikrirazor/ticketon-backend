@@ -1,8 +1,8 @@
 import { Router } from "express";
 import {
-    getDashboardStats,
-    getOrganizerEvents,
-    getOrganizerTransactions,
+  getDashboardStats,
+  getOrganizerEvents,
+  getOrganizerTransactions,
 } from "../controllers/organizer.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 
@@ -13,14 +13,14 @@ router.use(authMiddleware);
 
 // Middleware to ensure user is an organizer
 router.use((req, res, next) => {
-    if ((req as any).user.role !== "ORGANIZER") {
-        res.status(403).json({
-            success: false,
-            message: "Access denied. Only organizers can access this area.",
-        });
-        return;
-    }
-    next();
+  if ((req as any).user.role !== "ORGANIZER") {
+    res.status(403).json({
+      success: false,
+      message: "Access denied. Only organizers can access this area.",
+    });
+    return;
+  }
+  next();
 });
 
 router.get("/stats", getDashboardStats);

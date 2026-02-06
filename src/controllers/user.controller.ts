@@ -6,7 +6,7 @@ import { hashPassword } from "../utils/password.util";
 export const getProfile = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -17,12 +17,12 @@ export const getProfile = async (
       where: { id: req.user.id },
       include: {
         points: {
-          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } }
+          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } },
         },
         coupons: {
-          where: { expiresAt: { gt: new Date() } }
-        }
-      }
+          where: { expiresAt: { gt: new Date() } },
+        },
+      },
     });
 
     if (!user) {
@@ -39,7 +39,7 @@ export const getProfile = async (
           ...user,
           totalPoints,
           points: undefined, // Hide raw points list if preferred, or keep it
-        }
+        },
       },
     });
   } catch (error) {
@@ -50,7 +50,7 @@ export const getProfile = async (
 export const updateProfile = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -58,7 +58,9 @@ export const updateProfile = async (
     }
 
     const { name, email, password } = req.body;
-    const avatarUrl = (req as any).file ? `/${(req as any).file.path.replace(/\\/g, "/")}` : undefined;
+    const avatarUrl = (req as any).file
+      ? `/${(req as any).file.path.replace(/\\/g, "/")}`
+      : undefined;
 
     const updateData: any = {};
     if (name) updateData.name = name;
@@ -74,12 +76,12 @@ export const updateProfile = async (
       data: updateData,
       include: {
         points: {
-          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } }
+          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } },
         },
         coupons: {
-          where: { expiresAt: { gt: new Date() } }
-        }
-      }
+          where: { expiresAt: { gt: new Date() } },
+        },
+      },
     });
 
     const totalPoints = updatedUser.points.reduce((sum, p) => sum + p.amount, 0);
@@ -92,7 +94,7 @@ export const updateProfile = async (
           ...updatedUser,
           totalPoints,
           points: undefined,
-        }
+        },
       },
     });
   } catch (error) {
@@ -103,7 +105,7 @@ export const updateProfile = async (
 export const getAllUsers = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { page, limit } = req.query; // ?page=1&limit=10

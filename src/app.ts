@@ -9,9 +9,11 @@ import path from "path";
 const app: Application = express();
 
 // Security middleware
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 
 // Serve static files
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -24,7 +26,7 @@ app.use(
   cors({
     origin: process.env.CORS_ORIGIN || "*",
     credentials: true,
-  })
+  }),
 );
 
 // Body parser middleware

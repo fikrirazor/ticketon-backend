@@ -10,11 +10,7 @@ const getPagination = (page: number, limit: number) => {
   return { skip, take: limit };
 };
 
-export const getEvents = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -23,7 +19,7 @@ export const getEvents = async (
     const { skip, take } = getPagination(page, limit);
 
     const where: any = {
-      deletedAt: null
+      deletedAt: null,
     };
 
     if (category) {
@@ -50,23 +46,23 @@ export const getEvents = async (
         skip,
         take,
         orderBy: {
-            createdAt: 'desc'
+          createdAt: "desc",
         },
         include: {
-            organizer: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true
-                }
+          organizer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
             },
-            location: {
-                select: {
-                  id: true,
-                  city: true
-                }
-            }
-        }
+          },
+          location: {
+            select: {
+              id: true,
+              city: true,
+            },
+          },
+        },
       }),
       prisma.event.count({ where }),
     ]);
@@ -74,10 +70,10 @@ export const getEvents = async (
     const totalPages = Math.ceil(total / limit);
 
     successResponse(res, "Events retrieved successfully", events, {
-        page,
-        limit,
-        total,
-        totalPages
+      page,
+      limit,
+      total,
+      totalPages,
     });
   } catch (error) {
     logger.error("Error retrieving events", error);
@@ -88,7 +84,7 @@ export const getEvents = async (
 export const getEventById = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -97,16 +93,16 @@ export const getEventById = async (
       where: { id, deletedAt: null },
       include: {
         organizer: {
-            select: {
-                id: true,
-                name: true,
-                email: true
-            }
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
         },
         location: {
-          select: { id: true, city: true }
-        }
-    }
+          select: { id: true, city: true },
+        },
+      },
     });
 
     if (!event) {
@@ -123,7 +119,7 @@ export const getEventById = async (
 export const createEvent = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // support both locationId (int) or location (city string) + address
@@ -202,7 +198,7 @@ export const createEvent = async (
 export const updateEvent = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -216,28 +212,31 @@ export const updateEvent = async (
     }
 
     if (event.organizerId !== user.id) {
-        throw new AppError(403, "You are not authorized to update this event");
+      throw new AppError(403, "You are not authorized to update this event");
     }
 
     // If updating capacity, check if there are any transactions
     if (updateData.seatTotal !== undefined && updateData.seatTotal !== event.seatTotal) {
-        const transactionCount = await prisma.transaction.count({
-            where: { eventId: id }
-        });
+      const transactionCount = await prisma.transaction.count({
+        where: { eventId: id },
+      });
 
-        if (transactionCount > 0) {
-            throw new AppError(400, "Cannot change capacity because transactions already exist for this event");
-        }
-        
-        // Update seatLeft as well if seatTotal changes
-        const diff = updateData.seatTotal - event.seatTotal;
-        updateData.seatLeft = event.seatLeft + diff;
-        
-        if (updateData.seatLeft < 0) {
-            throw new AppError(400, "New capacity is less than sold seats");
-        }
+      if (transactionCount > 0) {
+        throw new AppError(
+          400,
+          "Cannot change capacity because transactions already exist for this event",
+        );
+      }
+
+      // Update seatLeft as well if seatTotal changes
+      const diff = updateData.seatTotal - event.seatTotal;
+      updateData.seatLeft = event.seatLeft + diff;
+
+      if (updateData.seatLeft < 0) {
+        throw new AppError(400, "New capacity is less than sold seats");
+      }
     }
-    
+
     // Transform dates if present
     if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
     if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
@@ -268,7 +267,7 @@ export const updateEvent = async (
 export const deleteEvent = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -281,13 +280,13 @@ export const deleteEvent = async (
     }
 
     if (event.organizerId !== user.id) {
-         throw new AppError(403, "You are not authorized to delete this event");
+      throw new AppError(403, "You are not authorized to delete this event");
     }
 
     // Soft Delete
     await prisma.event.update({
       where: { id },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: new Date() },
     });
 
     successResponse(res, "Event deleted successfully (soft delete)");

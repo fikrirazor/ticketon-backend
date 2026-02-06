@@ -106,7 +106,6 @@ export const initTransactionCron = () => {
           logger.info(`Transaction ${transaction.id} (WAITING_ADMIN) auto-canceled after 3 days.`);
         });
       }
-
     } catch (error) {
       logger.error("Error in Transaction Auto-Expirations Cron Job:", error);
     }

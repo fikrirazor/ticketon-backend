@@ -7,7 +7,7 @@ const storage = multer.diskStorage({
   destination: (req, _file, cb) => {
     const subDir = (req as any).uploadDir || "general";
     const fullPath = path.join("uploads", subDir);
-    
+
     if (!fs.existsSync(fullPath)) {
       fs.mkdirSync(fullPath, { recursive: true });
     }

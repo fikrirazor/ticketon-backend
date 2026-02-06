@@ -7,7 +7,7 @@ import { updateVoucherSchema } from "../validations/voucher.validation";
 const router = Router();
 
 // Validation can be public or protected. Assuming public for now as users might validate before login or just by code.
-// But to prevent brute force, maybe rate limit or auth. 
+// But to prevent brute force, maybe rate limit or auth.
 // Given requirements, generic validation.
 router.get("/:code/validate", validateVoucher);
 

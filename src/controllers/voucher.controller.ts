@@ -7,7 +7,7 @@ import { logger } from "../utils/logger";
 export const createVoucher = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { eventId } = req.params;
@@ -58,7 +58,7 @@ export const createVoucher = async (
 export const getVouchersByEvent = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { eventId } = req.params;
@@ -66,27 +66,27 @@ export const getVouchersByEvent = async (
 
     // Check if event exists
     const event = await prisma.event.findUnique({
-        where: { id: eventId },
-      });
-  
-      if (!event) {
-        throw new AppError(404, "Event not found");
-      }
-      
-      // Optional: Only organizer can see all vouchers? Or public?
-      // Usually public can't see all vouchers unless they are public. 
-      // Assuming for management purposes (Organizer) based on context.
-      // But maybe users can see them if listed? Sticking to organizer for management.
-      if (event.organizerId !== user.id) {
-         // If we want public availability, we can remove this. 
-         // But "Voucher Management" sounds like admin/organizer feature. 
-         // I'll restrict it for now.
-         throw new AppError(403, "Not authorized to view vouchers for this event");
-      }
+      where: { id: eventId },
+    });
+
+    if (!event) {
+      throw new AppError(404, "Event not found");
+    }
+
+    // Optional: Only organizer can see all vouchers? Or public?
+    // Usually public can't see all vouchers unless they are public.
+    // Assuming for management purposes (Organizer) based on context.
+    // But maybe users can see them if listed? Sticking to organizer for management.
+    if (event.organizerId !== user.id) {
+      // If we want public availability, we can remove this.
+      // But "Voucher Management" sounds like admin/organizer feature.
+      // I'll restrict it for now.
+      throw new AppError(403, "Not authorized to view vouchers for this event");
+    }
 
     const vouchers = await prisma.voucher.findMany({
       where: { eventId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     successResponse(res, "Vouchers retrieved successfully", vouchers);
@@ -99,7 +99,7 @@ export const getVouchersByEvent = async (
 export const validateVoucher = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { code } = req.params;
@@ -145,7 +145,7 @@ export const validateVoucher = async (
         discountPercent: voucher.discountPercent,
         eventId: voucher.eventId,
         eventName: voucher.event.title,
-      }
+      },
     });
   } catch (error) {
     // If we want to return 200 with valid:false instead of 400 error:
@@ -161,7 +161,7 @@ export const validateVoucher = async (
 export const updateVoucher = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -170,7 +170,7 @@ export const updateVoucher = async (
 
     const voucher = await prisma.voucher.findUnique({
       where: { id },
-      include: { event: true } // Need event to check organizer
+      include: { event: true }, // Need event to check organizer
     });
 
     if (!voucher) {
@@ -200,19 +200,19 @@ export const updateVoucher = async (
 export const deleteVoucher = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
-   try {
+  try {
     const { id } = req.params;
     const user = (req as any).user;
 
     const voucher = await prisma.voucher.findUnique({
       where: { id },
-      include: { event: true }
+      include: { event: true },
     });
 
     if (!voucher) {
-       throw new AppError(404, "Voucher not found");
+      throw new AppError(404, "Voucher not found");
     }
 
     if (voucher.event.organizerId !== user.id) {
@@ -222,8 +222,8 @@ export const deleteVoucher = async (
     await prisma.voucher.delete({ where: { id } });
 
     successResponse(res, "Voucher deleted successfully");
-   } catch (error) {
-     logger.error("Error deleting voucher", error);
-     next(error);
-   }
+  } catch (error) {
+    logger.error("Error deleting voucher", error);
+    next(error);
+  }
 };

@@ -2,10 +2,10 @@
  * ============================================================================
  * REVIEW CONTROLLER - Mengelola Review/Rating Event
  * ============================================================================
- * 
+ *
  * File ini berisi semua fungsi untuk mengelola review dan rating event.
  * Review hanya bisa dibuat oleh user yang sudah menghadiri event (status DONE).
- * 
+ *
  * DAFTAR FUNGSI:
  * --------------
  * 1. createReview()           - Membuat review baru untuk event yang sudah selesai
@@ -14,11 +14,11 @@
  * 4. getEligibleReviews()     - Mengambil daftar event yang bisa direview oleh user
  * 5. updateReview()           - Update review (hanya dalam 24 jam setelah dibuat)
  * 6. deleteReview()           - Hapus review (hanya pemilik review)
- * 
+ *
  * HELPER FUNCTION:
  * ----------------
  * - updateRatings()           - Update rata-rata rating event dan organizer
- * 
+ *
  * ATURAN BISNIS:
  * --------------
  * - User hanya bisa review event yang sudah mereka hadiri (transaction status = DONE)
@@ -26,7 +26,7 @@
  * - Satu user hanya bisa review satu event sekali
  * - Review bisa diupdate dalam 24 jam pertama
  * - Setiap perubahan review akan update rating event dan organizer
- * 
+ *
  * ============================================================================
  */
 
@@ -40,15 +40,15 @@ import { logger } from "../utils/logger";
  * ============================================================================
  * HELPER FUNCTION: updateRatings
  * ============================================================================
- * 
+ *
  * Fungsi ini digunakan untuk mengupdate rata-rata rating setelah ada perubahan review.
  * Akan mengupdate 2 hal:
  * 1. Rating event (rata-rata dari semua review event tersebut)
  * 2. Rating organizer (rata-rata dari semua review event yang dibuat organizer)
- * 
+ *
  * @param tx - Prisma transaction object (untuk memastikan atomicity)
  * @param eventId - ID event yang reviewnya berubah
- * 
+ *
  * CARA KERJA:
  * 1. Ambil data event untuk mendapatkan organizerId
  * 2. Hitung rata-rata rating untuk event tersebut
@@ -100,24 +100,24 @@ const updateRatings = async (tx: any, eventId: string) => {
  * ============================================================================
  * FUNCTION 1: createReview
  * ============================================================================
- * 
+ *
  * Membuat review baru untuk event yang sudah selesai.
- * 
+ *
  * REQUEST:
  * - Params: eventId (ID event yang akan direview)
  * - Body: { rating: number, comment: string }
  * - Auth: Required (user harus login)
- * 
+ *
  * VALIDASI:
  * 1. Event harus ada
  * 2. Event harus sudah selesai (endDate sudah lewat)
  * 3. User harus pernah menghadiri event (punya transaction dengan status DONE)
  * 4. User belum pernah review event ini sebelumnya
- * 
+ *
  * PROSES:
  * 1. Buat review baru
  * 2. Update rating event dan organizer
- * 
+ *
  * RESPONSE:
  * - Success: Review yang baru dibuat
  * ============================================================================
@@ -125,7 +125,7 @@ const updateRatings = async (tx: any, eventId: string) => {
 export const createReview = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Ambil data dari request
@@ -191,7 +191,7 @@ export const createReview = async (
 
       // Update rating event dan organizer
       await updateRatings(tx, eventId);
-      
+
       return newReview;
     });
 
@@ -209,21 +209,21 @@ export const createReview = async (
  * ============================================================================
  * FUNCTION 2: getEventReviews
  * ============================================================================
- * 
+ *
  * Mengambil semua review untuk event tertentu dengan pagination dan sorting.
- * 
+ *
  * REQUEST:
  * - Params: eventId (ID event)
- * - Query: 
+ * - Query:
  *   - page (default: 1)
  *   - limit (default: 10)
  *   - sortBy ("newest" | "highest" | "lowest", default: "newest")
- * 
+ *
  * FITUR:
  * - Pagination (membagi data menjadi halaman-halaman)
  * - Sorting (urutkan berdasarkan tanggal terbaru, rating tertinggi, atau terendah)
  * - Include data user (nama reviewer)
- * 
+ *
  * RESPONSE:
  * - Data: Array of reviews dengan info user
  * - Meta: { page, limit, total, totalPages }
@@ -232,12 +232,12 @@ export const createReview = async (
 export const getEventReviews = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     // Ambil parameter dari request
     const { eventId } = req.params;
-    
+
     // Pagination: ambil query parameter atau gunakan default
     const page = parseInt(req.query.page as string) || 1; // Halaman ke berapa (default: 1)
     const limit = parseInt(req.query.limit as string) || 10; // Berapa data per halaman (default: 10)
@@ -287,19 +287,19 @@ export const getEventReviews = async (
  * ============================================================================
  * FUNCTION 3: getOrganizerReviews
  * ============================================================================
- * 
+ *
  * Mengambil semua review untuk semua event yang dibuat oleh organizer tertentu.
  * Berguna untuk melihat reputasi organizer.
- * 
+ *
  * REQUEST:
  * - Params: organizerId (ID organizer)
  * - Query: page, limit (untuk pagination)
- * 
+ *
  * FITUR:
  * - Menampilkan review dari SEMUA event organizer
  * - Include info user (reviewer) dan event (judul event)
  * - Menampilkan rata-rata rating organizer
- * 
+ *
  * RESPONSE:
  * - Data: Array of reviews
  * - Meta: { page, limit, total, totalPages, averageRating }
@@ -308,7 +308,7 @@ export const getEventReviews = async (
 export const getOrganizerReviews = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { organizerId } = req.params;
@@ -358,18 +358,18 @@ export const getOrganizerReviews = async (
  * ============================================================================
  * FUNCTION 4: getEligibleReviews
  * ============================================================================
- * 
+ *
  * Mengambil daftar event yang BISA direview oleh user yang sedang login.
  * Berguna untuk menampilkan "Event yang belum direview" di frontend.
- * 
+ *
  * REQUEST:
  * - Auth: Required (user harus login)
- * 
+ *
  * KRITERIA EVENT YANG BISA DIREVIEW:
  * 1. Event sudah selesai (endDate sudah lewat)
  * 2. User punya transaction dengan status DONE untuk event tersebut
  * 3. User belum pernah review event tersebut
- * 
+ *
  * RESPONSE:
  * - Data: Array of events yang memenuhi kriteria
  * ============================================================================
@@ -377,7 +377,7 @@ export const getOrganizerReviews = async (
 export const getEligibleReviews = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const userId = (req as any).user.id;
@@ -387,18 +387,20 @@ export const getEligibleReviews = async (
       where: {
         // Kriteria 1: Event sudah selesai
         endDate: { lt: new Date() }, // lt = less than (kurang dari tanggal sekarang)
-        
+
         // Kriteria 2: User punya transaction DONE untuk event ini
         transactions: {
-          some: { // some = ada setidaknya satu transaction yang memenuhi kondisi
+          some: {
+            // some = ada setidaknya satu transaction yang memenuhi kondisi
             userId,
             status: "DONE",
           },
         },
-        
+
         // Kriteria 3: User belum pernah review event ini
         reviews: {
-          none: { // none = tidak ada review yang memenuhi kondisi
+          none: {
+            // none = tidak ada review yang memenuhi kondisi
             userId,
           },
         },
@@ -417,23 +419,23 @@ export const getEligibleReviews = async (
  * ============================================================================
  * FUNCTION 5: updateReview
  * ============================================================================
- * 
+ *
  * Update review yang sudah dibuat (rating dan/atau comment).
- * 
+ *
  * REQUEST:
  * - Params: id (ID review)
  * - Body: { rating?: number, comment?: string }
  * - Auth: Required
- * 
+ *
  * VALIDASI:
  * 1. Review harus ada
  * 2. User harus pemilik review
  * 3. Review hanya bisa diupdate dalam 24 jam pertama setelah dibuat
- * 
+ *
  * PROSES:
  * 1. Update review
  * 2. Update ulang rating event dan organizer (karena rating berubah)
- * 
+ *
  * RESPONSE:
  * - Success: Review yang sudah diupdate
  * ============================================================================
@@ -441,7 +443,7 @@ export const getEligibleReviews = async (
 export const updateReview = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params; // ID review dari URL
@@ -484,7 +486,7 @@ export const updateReview = async (
 
       // Update ulang rating event dan organizer karena rating berubah
       await updateRatings(tx, review.eventId);
-      
+
       return ur;
     });
 
@@ -499,21 +501,21 @@ export const updateReview = async (
  * ============================================================================
  * FUNCTION 6: deleteReview
  * ============================================================================
- * 
+ *
  * Menghapus review.
- * 
+ *
  * REQUEST:
  * - Params: id (ID review)
  * - Auth: Required
- * 
+ *
  * VALIDASI:
  * 1. Review harus ada
  * 2. User harus pemilik review ATAU role ORGANIZER
- * 
+ *
  * PROSES:
  * 1. Hapus review
  * 2. Update ulang rating event dan organizer (karena review berkurang)
- * 
+ *
  * RESPONSE:
  * - Success: Message sukses
  * ============================================================================
@@ -521,7 +523,7 @@ export const updateReview = async (
 export const deleteReview = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params; // ID review dari URL
@@ -541,7 +543,7 @@ export const deleteReview = async (
     // - Dia adalah pemilik review, ATAU
     // - Dia adalah ORGANIZER (moderator)
     if (review.userId !== userId && (req as any).user.role !== "ORGANIZER") {
-        throw new AppError(403, "Not authorized to delete this review");
+      throw new AppError(403, "Not authorized to delete this review");
     }
 
     // PROSES: Hapus review dan update rating dalam transaction

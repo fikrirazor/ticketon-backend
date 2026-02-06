@@ -6,7 +6,7 @@ export const errorHandler = (
   err: Error,
   req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ): void => {
   // Handle Yup validation errors
   if (err instanceof ValidationError) {
@@ -15,7 +15,7 @@ export const errorHandler = (
     console.error("Path:", req.method, req.originalUrl);
     console.error("Errors:", err.errors);
     console.error("─────────────────────────────────────\n");
-    
+
     res.status(400).json({
       success: false,
       message: "Validation failed",
@@ -29,18 +29,18 @@ export const errorHandler = (
     // Log AppError dengan warna dan format yang jelas
     const isClientError = err.statusCode < 500;
     const emoji = isClientError ? "⚠️" : "🔴";
-    
+
     console.error(`\n${emoji} APP ERROR [${err.statusCode}]:`);
     console.error("Path:", req.method, req.originalUrl);
     console.error("Message:", err.message);
     console.error("Status:", err.status);
-    
+
     // Tampilkan stack trace di development
     if (process.env.NODE_ENV === "development" && err.stack) {
       console.error("Stack:", err.stack);
     }
     console.error("─────────────────────────────────────\n");
-    
+
     res.status(err.statusCode).json({
       success: false,
       message: err.message,
@@ -51,7 +51,7 @@ export const errorHandler = (
   // Handle Prisma errors
   if (err.name === "PrismaClientKnownRequestError") {
     const prismaError = err as any;
-    
+
     console.error("\n🔴 PRISMA ERROR:");
     console.error("Path:", req.method, req.originalUrl);
     console.error("Code:", prismaError.code);
@@ -80,7 +80,7 @@ export const errorHandler = (
   console.error("Path:", req.method, req.originalUrl);
   console.error("Name:", err.name);
   console.error("Message:", err.message);
-  
+
   // Tampilkan full stack trace di development
   if (process.env.NODE_ENV === "development" && err.stack) {
     console.error("Stack Trace:");
@@ -91,10 +91,7 @@ export const errorHandler = (
   // Default error response
   res.status(500).json({
     success: false,
-    message:
-      process.env.NODE_ENV === "production"
-        ? "Internal server error"
-        : err.message,
+    message: process.env.NODE_ENV === "production" ? "Internal server error" : err.message,
   });
 };
 
