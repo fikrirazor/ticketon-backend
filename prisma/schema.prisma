@@ -54,6 +54,7 @@ model User {
   transactions Transaction[]
   points       Point[]
   reviews      Review[]
+  coupons      Coupon[]
 }
 
 model Location {
@@ -148,11 +149,13 @@ model Voucher {
 
 model Coupon {
   id        String   @id @default(uuid())
+  userId    String?  // Optional for user-specific coupons
   code      String   @unique
   discount  Int
   expiresAt DateTime
   createdAt DateTime @default(now())
 
+  user      User?    @relation(fields: [userId], references: [id])
   transactions Transaction[]
 }
 

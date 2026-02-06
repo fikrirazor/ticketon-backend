@@ -17,12 +17,12 @@ export const signUp = async (
     // 1. Check if referrer exists if code provided
     let referrerId = null;
     if (referredBy) {
-        const referrer = await prisma.user.findUnique({
-            where: { referralCode: referredBy }
-        });
-        if (referrer) {
-            referrerId = referrer.id;
-        }
+      const referrer = await prisma.user.findUnique({
+        where: { referralCode: referredBy }
+      });
+      if (referrer) {
+        referrerId = referrer.id;
+      }
     }
 
     // 2. Check if user already exists
@@ -37,28 +37,59 @@ export const signUp = async (
     // 3. Hash password
     const hashedPassword = await hashPassword(password);
 
-    // 4. Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role || "CUSTOMER",
-        referralCode: generateReferralCode(),
-        referredById: referrerId,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        referralCode: true,
-        referredById: true,
-        ratingSummary: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    // 4. Create user and handle rewards in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: role || "CUSTOMER",
+          referralCode: generateReferralCode(),
+          referredById: referrerId,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          referralCode: true,
+          referredById: true,
+          ratingSummary: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      // Handle rewards if referredBy was provided and valid
+      if (referrerId) {
+        const threeMonthsFromNow = new Date();
+        threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
+
+        // Referrer gets 10,000 points
+        await tx.point.create({
+          data: {
+            userId: referrerId,
+            amount: 10000,
+            expiresAt: threeMonthsFromNow,
+          },
+        });
+
+        // Referred user gets a discount coupon
+        await tx.coupon.create({
+          data: {
+            userId: newUser.id,
+            code: `REF-${newUser.id.substring(0, 8).toUpperCase()}`,
+            discount: 10000, // Assuming 10k discount from the requirement context
+            expiresAt: threeMonthsFromNow,
+          },
+        });
+      }
+
+      return newUser;
     });
+
+    const user = result;
 
     // Generate JWT token
     const token = generateToken({
@@ -87,9 +118,17 @@ export const signIn = async (
   try {
     const { email, password } = req.body;
 
-    // Find user by email
+    // Find user by email with points and coupons
     const user = await prisma.user.findUnique({
       where: { email },
+      include: {
+        points: {
+          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } }
+        },
+        coupons: {
+          where: { expiresAt: { gt: new Date() } }
+        }
+      }
     });
 
     if (!user) {
@@ -109,19 +148,17 @@ export const signIn = async (
       email: user.email,
     });
 
+    const totalPoints = user.points.reduce((sum, p) => sum + p.amount, 0);
+
     res.status(200).json({
       success: true,
       message: "Sign in successful",
       data: {
         user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          referralCode: user.referralCode,
-          ratingSummary: (user as any).ratingSummary ?? 0,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
+          ...user,
+          totalPoints,
+          points: undefined,
+          password: undefined,
         },
         token,
       },

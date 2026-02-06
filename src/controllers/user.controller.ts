@@ -15,26 +15,32 @@ export const getProfile = async (
 
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        avatarUrl: true,
-        referralCode: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      include: {
+        points: {
+          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } }
+        },
+        coupons: {
+          where: { expiresAt: { gt: new Date() } }
+        }
+      }
     });
 
     if (!user) {
       throw new AppError(404, "User not found");
     }
 
+    const totalPoints = user.points.reduce((sum, p) => sum + p.amount, 0);
+
     res.status(200).json({
       success: true,
       message: "Profile retrieved successfully",
-      data: { user },
+      data: {
+        user: {
+          ...user,
+          totalPoints,
+          points: undefined, // Hide raw points list if preferred, or keep it
+        }
+      },
     });
   } catch (error) {
     next(error);
@@ -66,22 +72,28 @@ export const updateProfile = async (
     const updatedUser = await prisma.user.update({
       where: { id: req.user.id },
       data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        avatarUrl: true,
-        referralCode: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      include: {
+        points: {
+          where: { expiresAt: { gt: new Date() }, amount: { gt: 0 } }
+        },
+        coupons: {
+          where: { expiresAt: { gt: new Date() } }
+        }
+      }
     });
+
+    const totalPoints = updatedUser.points.reduce((sum, p) => sum + p.amount, 0);
 
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      data: { user: updatedUser },
+      data: {
+        user: {
+          ...updatedUser,
+          totalPoints,
+          points: undefined,
+        }
+      },
     });
   } catch (error) {
     next(error);
