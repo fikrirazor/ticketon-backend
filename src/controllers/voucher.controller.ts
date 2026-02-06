@@ -12,7 +12,7 @@ export const createVoucher = async (
   try {
     const { eventId } = req.params;
     const { code, discountAmount, discountPercent, maxUsage, startDate, endDate } = req.body;
-    const user = (req as any).user;
+    const user = req.user!;
 
     // Check if event exists and belongs to user
     const event = await prisma.event.findUnique({
@@ -62,7 +62,7 @@ export const getVouchersByEvent = async (
 ): Promise<void> => {
   try {
     const { eventId } = req.params;
-    const user = (req as any).user;
+    const user = req.user!;
 
     // Check if event exists
     const event = await prisma.event.findUnique({
@@ -166,7 +166,7 @@ export const updateVoucher = async (
   try {
     const { id } = req.params;
     const updateData = req.body;
-    const user = (req as any).user;
+    const user = req.user!;
 
     const voucher = await prisma.voucher.findUnique({
       where: { id },
@@ -204,7 +204,7 @@ export const deleteVoucher = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const user = (req as any).user;
+    const user = req.user!;
 
     const voucher = await prisma.voucher.findUnique({
       where: { id },

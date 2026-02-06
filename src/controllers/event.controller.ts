@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { Prisma } from "../generated/prisma/client";
 import prisma from "../config/database";
 import { AppError } from "../utils/error";
 import { successResponse } from "../utils/apiResponse";
@@ -18,12 +19,12 @@ export const getEvents = async (req: Request, res: Response, next: NextFunction)
 
     const { skip, take } = getPagination(page, limit);
 
-    const where: any = {
+    const where: Prisma.EventWhereInput = {
       deletedAt: null,
     };
 
     if (category) {
-      where.category = category as string;
+      where.category = category as any;
     }
 
     // Filter by related Location.city instead of a non-existent `location` string on Event
@@ -140,7 +141,7 @@ export const createEvent = async (
 
     const imageUrl = (req as any).file?.path || bodyImageUrl;
 
-    const user = (req as any).user;
+    const user = req.user!;
     if (user.role !== "ORGANIZER") {
       throw new AppError(403, "Access denied. Only organizers can create events.");
     }
@@ -203,7 +204,7 @@ export const updateEvent = async (
   try {
     const { id } = req.params;
     const updateData = req.body;
-    const user = (req as any).user;
+    const user = req.user!;
 
     const event = await prisma.event.findUnique({ where: { id } });
 
@@ -271,7 +272,7 @@ export const deleteEvent = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const user = (req as any).user;
+    const user = req.user!;
 
     const event = await prisma.event.findUnique({ where: { id } });
 

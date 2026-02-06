@@ -178,7 +178,7 @@ export const createReview = async (
 
     // PROSES: Buat review dan update ratings dalam satu transaction
     // Transaction memastikan semua operasi berhasil atau gagal bersama-sama (atomicity)
-    const review = await prisma.$transaction(async (tx) => {
+    const review = await prisma.$transaction(async (tx: any) => {
       // Buat review baru
       const newReview = await tx.review.create({
         data: {
@@ -477,7 +477,7 @@ export const updateReview = async (
     }
 
     // PROSES: Update review dan rating dalam transaction
-    const updatedReview = await prisma.$transaction(async (tx) => {
+    const updatedReview = await prisma.$transaction(async (tx: any) => {
       // Update review dengan data baru
       const ur = await tx.review.update({
         where: { id },
@@ -547,7 +547,7 @@ export const deleteReview = async (
     }
 
     // PROSES: Hapus review dan update rating dalam transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Hapus review
       await tx.review.delete({
         where: { id },

@@ -29,7 +29,7 @@ export const getProfile = async (
       throw new AppError(404, "User not found");
     }
 
-    const totalPoints = user.points.reduce((sum, p) => sum + p.amount, 0);
+    const totalPoints = user.points.reduce((sum: number, p: any) => sum + p.amount, 0);
 
     res.status(200).json({
       success: true,
@@ -84,7 +84,7 @@ export const updateProfile = async (
       },
     });
 
-    const totalPoints = updatedUser.points.reduce((sum, p) => sum + p.amount, 0);
+    const totalPoints = updatedUser.points.reduce((sum: number, p: any) => sum + p.amount, 0);
 
     res.status(200).json({
       success: true,

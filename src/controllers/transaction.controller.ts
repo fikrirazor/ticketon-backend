@@ -11,7 +11,7 @@ export const createTransaction = async (
 ): Promise<void> => {
   try {
     const { eventId, voucherId, couponId, pointsUsed, items } = req.body;
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
 
     // 1. Fetch Event
     const event = await prisma.event.findUnique({
@@ -22,7 +22,10 @@ export const createTransaction = async (
       throw new AppError(404, "Event not found");
     }
 
-    const quantity = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+    const quantity = items.reduce(
+      (sum: number, item: { quantity: number }) => sum + item.quantity,
+      0,
+    );
 
     if (event.seatLeft < quantity) {
       throw new AppError(400, "Not enough seats available");
@@ -93,7 +96,7 @@ export const createTransaction = async (
         orderBy: { expiresAt: "asc" },
       });
 
-      const totalValidPoints = validPoints.reduce((sum, p) => sum + p.amount, 0);
+      const totalValidPoints = validPoints.reduce((sum: number, p) => sum + p.amount, 0);
 
       if (totalValidPoints < pointsUsed) {
         throw new AppError(400, `Insufficient points. You only have ${totalValidPoints} points.`);
@@ -170,7 +173,7 @@ export const createTransaction = async (
           status: "WAITING_PAYMENT",
           expiresAt,
           items: {
-            create: items.map((item: any) => ({
+            create: items.map((item: { quantity: number }) => ({
               quantity: item.quantity,
               price: event.price,
             })),
@@ -202,7 +205,7 @@ export const getTransactionById = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
 
     const transaction = await prisma.transaction.findUnique({
       where: { id },
@@ -244,7 +247,7 @@ export const getUserTransactions = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
@@ -283,7 +286,7 @@ export const uploadPaymentProof = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const { paymentProofUrl } = req.body;
 
     if (!paymentProofUrl) {
@@ -340,7 +343,7 @@ export const cancelTransaction = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
 
     const transaction = await prisma.transaction.findUnique({
       where: { id },
@@ -362,7 +365,7 @@ export const cancelTransaction = async (
     // Rollback logic
     await prisma.$transaction(async (tx) => {
       // 1. Restore seats
-      const quantity = transaction.items.reduce((sum, item) => sum + item.quantity, 0);
+      const quantity = transaction.items.reduce((sum: number, item) => sum + item.quantity, 0);
       await tx.event.update({
         where: { id: transaction.eventId },
         data: { seatLeft: { increment: quantity } },

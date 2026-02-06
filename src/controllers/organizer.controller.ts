@@ -8,7 +8,7 @@ export const getDashboardStats = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const organizerId = (req as any).user.id;
+    const organizerId = req.user!.id;
 
     // 1. Get Event stats
     const events = await prisma.event.findMany({
@@ -25,10 +25,10 @@ export const getDashboardStats = async (
     let totalRevenue = 0;
     let totalTicketsSold = 0;
 
-    events.forEach((event: any) => {
-      event.transactions.forEach((tx: any) => {
+    events.forEach((event) => {
+      event.transactions.forEach((tx) => {
         totalRevenue += tx.finalPrice;
-        tx.items.forEach((item: any) => {
+        tx.items.forEach((item) => {
           totalTicketsSold += item.quantity;
         });
       });
@@ -53,7 +53,7 @@ export const getOrganizerEvents = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const organizerId = (req as any).user.id;
+    const organizerId = req.user!.id;
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -94,7 +94,7 @@ export const getOrganizerTransactions = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const organizerId = (req as any).user.id;
+    const organizerId = req.user!.id;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;

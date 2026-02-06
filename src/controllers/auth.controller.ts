@@ -34,7 +34,7 @@ export const signUp = async (req: Request, res: Response, next: NextFunction): P
     const hashedPassword = await hashPassword(password);
 
     // 4. Create user and handle rewards in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const newUser = await tx.user.create({
         data: {
           name,
@@ -140,7 +140,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
       email: user.email,
     });
 
-    const totalPoints = user.points.reduce((sum, p) => sum + p.amount, 0);
+    const totalPoints = user.points.reduce((sum: number, p: any) => sum + p.amount, 0);
 
     res.status(200).json({
       success: true,
