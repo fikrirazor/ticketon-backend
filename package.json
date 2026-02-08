@@ -29,6 +29,7 @@
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.3.0",
     "bcrypt": "^6.0.0",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
@@ -36,6 +37,7 @@
     "hono": "^4.11.8",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
     "node-cron": "^4.2.1",
     "prisma": "^7.3.0",
     "yup": "^1.7.1"

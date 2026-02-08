@@ -1,21 +1,17 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.config";
 import { AppError } from "../utils/error";
 
-const storage = multer.diskStorage({
-  destination: (req, _file, cb) => {
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, _file) => {
     const subDir = (req as any).uploadDir || "general";
-    const fullPath = path.join("uploads", subDir);
-
-    if (!fs.existsSync(fullPath)) {
-      fs.mkdirSync(fullPath, { recursive: true });
-    }
-    cb(null, fullPath);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+    return {
+      folder: `ticketon/${subDir}`,
+      allowed_formats: ["jpg", "png", "jpeg"],
+      public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+    };
   },
 });
 

@@ -170,6 +170,7 @@ export const createEvent = async (
 
     const priceInt = parseInt(price as any);
     const seatTotalInt = parseInt(seatTotal as any);
+    const isPromotedBool = isPromoted === "true" || isPromoted === true;
 
     const event = await prisma.event.create({
       data: {
@@ -183,7 +184,7 @@ export const createEvent = async (
         seatLeft: seatTotalInt, // Initially seatLeft equals seatTotal
         category,
         imageUrl,
-        isPromoted: isPromoted || false,
+        isPromoted: isPromotedBool,
         organizerId: user.id,
         locationId: locationIdToUse,
       },
