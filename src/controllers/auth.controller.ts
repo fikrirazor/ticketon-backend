@@ -4,6 +4,7 @@ import { hashPassword, comparePassword } from "../utils/password.util";
 import { generateToken } from "../utils/jwt.util";
 import { AppError } from "../utils/error";
 import { generateReferralCode } from "../utils/referral.util";
+import crypto from "crypto";
 
 export const signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -154,6 +155,86 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
         },
         token,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new AppError(404, "User with this email does not exist");
+    }
+
+    // Generate random token (64 chars)
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetExpires = new Date(Date.now() + 3600000); // 1 hour
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpires: resetExpires,
+      },
+    });
+
+    // NOTE: In production, send this via email.
+    // For now, return it for testing purposes.
+    res.status(200).json({
+      success: true,
+      message: "Password reset token generated. Check your email (simulated).",
+      data: { resetToken },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { token, password } = req.body;
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      throw new AppError(400, "Password reset token is invalid or has expired");
+    }
+
+    // Hash new password
+    const hashedPassword = await hashPassword(password);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Password has been reset successfully",
     });
   } catch (error) {
     next(error);

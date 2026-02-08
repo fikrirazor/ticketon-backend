@@ -1,7 +1,7 @@
 {
-  "name": "backend_sample",
+  "name": "ticketon-backend",
   "version": "1.0.0",
-  "description": "Type-safe Node.js Express application with TypeScript, Prisma, and JWT authentication",
+  "description": "Ticket Management application with TypeScript, Prisma, and JWT authentication",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",

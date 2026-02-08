@@ -410,3 +410,110 @@ export const cancelTransaction = async (
     next(error);
   }
 };
+
+export const approveTransaction = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+      include: { event: true },
+    });
+
+    if (!transaction) {
+      throw new AppError(404, "Transaction not found");
+    }
+
+    if (transaction.event.organizerId !== userId) {
+      throw new AppError(403, "Not authorized to approve this transaction");
+    }
+
+    if (transaction.status !== "WAITING_ADMIN") {
+      throw new AppError(400, `Transaction must be in WAITING_ADMIN status to be approved`);
+    }
+
+    const updatedTransaction = await prisma.transaction.update({
+      where: { id },
+      data: { status: "DONE" },
+    });
+
+    successResponse(res, "Transaction approved successfully", updatedTransaction);
+  } catch (error) {
+    logger.error(`Error approving transaction ${req.params.id}`, error);
+    next(error);
+  }
+};
+
+export const rejectTransaction = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+      include: { event: true, items: true },
+    });
+
+    if (!transaction) {
+      throw new AppError(404, "Transaction not found");
+    }
+
+    if (transaction.event.organizerId !== userId) {
+      throw new AppError(403, "Not authorized to reject this transaction");
+    }
+
+    if (transaction.status !== "WAITING_ADMIN" && transaction.status !== "WAITING_PAYMENT") {
+      throw new AppError(400, `Cannot reject transaction with status ${transaction.status}`);
+    }
+
+    // Rollback logic (copied/adapted from cancelTransaction)
+    await prisma.$transaction(async (tx) => {
+      // 1. Restore seats
+      const quantity = transaction.items.reduce((sum: number, item) => sum + item.quantity, 0);
+      await tx.event.update({
+        where: { id: transaction.eventId },
+        data: { seatLeft: { increment: quantity } },
+      });
+
+      // 2. Restore points
+      if (transaction.pointsUsed > 0) {
+        const restoreExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+        await tx.point.create({
+          data: {
+            userId: transaction.userId,
+            amount: transaction.pointsUsed,
+            expiresAt: restoreExpiresAt,
+          },
+        });
+      }
+
+      // 3. Restore voucher usage
+      if (transaction.voucherId) {
+        await tx.voucher.update({
+          where: { id: transaction.voucherId },
+          data: { usedCount: { decrement: 1 } },
+        });
+      }
+
+      // 4. Update status
+      await tx.transaction.update({
+        where: { id },
+        data: { status: "REJECTED" },
+      });
+    });
+
+    successResponse(res, "Transaction rejected successfully. Seats and points have been restored.");
+  } catch (error) {
+    logger.error(`Error rejecting transaction ${req.params.id}`, error);
+    next(error);
+  }
+};

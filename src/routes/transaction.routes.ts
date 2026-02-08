@@ -5,6 +5,8 @@ import {
   getUserTransactions,
   uploadPaymentProof,
   cancelTransaction,
+  approveTransaction,
+  rejectTransaction,
 } from "../controllers/transaction.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validation.middleware";
@@ -27,5 +29,9 @@ router.post(
   uploadPaymentProof,
 );
 router.put("/:id/cancel", authMiddleware, cancelTransaction);
+
+// Organizer actions
+router.patch("/:id/approve", authMiddleware, approveTransaction);
+router.patch("/:id/reject", authMiddleware, rejectTransaction);
 
 export default router;

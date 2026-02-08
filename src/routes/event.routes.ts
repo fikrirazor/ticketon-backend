@@ -5,6 +5,7 @@ import {
   createEvent,
   updateEvent,
   deleteEvent,
+  getEventAttendees,
 } from "../controllers/event.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { validate } from "../middleware/validation.middleware";
@@ -35,6 +36,7 @@ router.post(
 );
 router.put("/:id", authMiddleware, validate(updateEventSchema), updateEvent);
 router.delete("/:id", authMiddleware, deleteEvent);
+router.get("/:id/attendees", authMiddleware, getEventAttendees);
 
 router.post("/:eventId/vouchers", authMiddleware, validate(createVoucherSchema), createVoucher);
 router.get("/:eventId/vouchers", authMiddleware, getVouchersByEvent);
