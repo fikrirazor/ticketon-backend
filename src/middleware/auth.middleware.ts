@@ -44,6 +44,8 @@ export const authMiddleware = async (
         updatedAt: true,
         ratingSummary: true,
         avatarUrl: true,
+        resetPasswordToken: true,
+        resetPasswordExpires: true,
       },
     });
 
