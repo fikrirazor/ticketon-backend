@@ -9,13 +9,31 @@ export const getDashboardStats = async (
 ): Promise<void> => {
   try {
     const organizerId = req.user!.id;
+    const { year, month, day } = req.query;
+
+    const txWhere: any = { status: "DONE" };
+
+    if (year || month || day) {
+      const gte = new Date();
+      if (year) gte.setFullYear(parseInt(year as string));
+      if (month) gte.setMonth(parseInt(month as string) - 1);
+      if (day) gte.setDate(parseInt(day as string));
+      gte.setHours(0, 0, 0, 0);
+
+      const lte = new Date(gte);
+      if (day) lte.setDate(lte.getDate() + 1);
+      else if (month) lte.setMonth(lte.getMonth() + 1);
+      else if (year) lte.setFullYear(lte.getFullYear() + 1);
+
+      txWhere.updatedAt = { gte, lt: lte };
+    }
 
     // 1. Get Event stats
     const events = await prisma.event.findMany({
       where: { organizerId, deletedAt: null },
       include: {
         transactions: {
-          where: { status: "DONE" },
+          where: txWhere,
           select: { finalPrice: true, items: { select: { quantity: true } } },
         },
       },

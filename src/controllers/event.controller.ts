@@ -136,8 +136,11 @@ export const createEvent = async (
       seatTotal,
       category,
       imageUrl: bodyImageUrl,
-      isPromoted,
+      isPromoted: isPromotedInput,
     } = req.body;
+
+    // Robust boolean parsing for isPromoted (FormData sends strings)
+    const isPromoted = isPromotedInput === true || isPromotedInput === "true";
 
     const imageUrl = (req as any).file?.path || bodyImageUrl;
 
@@ -183,7 +186,7 @@ export const createEvent = async (
         seatLeft: seatTotalInt, // Initially seatLeft equals seatTotal
         category,
         imageUrl,
-        isPromoted: isPromoted || false,
+        isPromoted,
         organizerId: user.id,
         locationId: locationIdToUse,
       },
@@ -253,6 +256,11 @@ export const updateEvent = async (
       delete updateData.location;
     }
 
+    // Robust boolean parsing for isPromoted in update
+    if (updateData.isPromoted !== undefined) {
+      updateData.isPromoted = updateData.isPromoted === true || updateData.isPromoted === "true";
+    }
+
     const updatedEvent = await prisma.event.update({
       where: { id },
       data: updateData,
@@ -293,6 +301,51 @@ export const deleteEvent = async (
     successResponse(res, "Event deleted successfully (soft delete)");
   } catch (error) {
     logger.error(`Error deleting event with id ${req.params.id}`, error);
+    next(error);
+  }
+};
+
+export const getEventAttendees = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    const event = await prisma.event.findUnique({
+      where: { id },
+    });
+
+    if (!event) {
+      throw new AppError(404, "Event not found");
+    }
+
+    if (event.organizerId !== userId) {
+      throw new AppError(403, "Not authorized to view attendees for this event");
+    }
+
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        eventId: id,
+        status: "DONE",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        items: true,
+      },
+    });
+
+    successResponse(res, "Event attendees retrieved successfully", transactions);
+  } catch (error) {
+    logger.error(`Error retrieving attendees for event ${req.params.id}`, error);
     next(error);
   }
 };

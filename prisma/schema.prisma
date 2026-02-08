@@ -46,6 +46,8 @@ model User {
   updatedAt    DateTime @updatedAt
   ratingSummary Float    @default(0)
   avatarUrl     String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
 
   referredBy   User?    @relation("ReferralRelation", fields: [referredById], references: [id])
   referrals    User[]   @relation("ReferralRelation")

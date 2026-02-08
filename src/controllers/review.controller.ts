@@ -144,9 +144,11 @@ export const createReview = async (
     }
 
     // Jika event belum selesai (tanggal sekarang masih sebelum endDate), lempar error
+    /* 
     if (new Date() < event.endDate) {
       throw new AppError(400, "You can only review an event after it has ended");
     }
+    */
 
     // VALIDASI 2: Cek apakah user pernah menghadiri event ini
     // User harus punya transaction dengan status DONE untuk event ini
