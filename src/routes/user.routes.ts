@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { getProfile, getAllUsers, updateProfile } from "../controllers/user.controller";
+import {
+  getProfile,
+  getAllUsers,
+  updateProfile,
+  getOrganizerProfile,
+} from "../controllers/user.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { upload } from "../middleware/upload.middleware";
 
@@ -34,5 +39,12 @@ router.put(
  * @access  Public
  */
 router.get("/", getAllUsers);
+
+/**
+ * @route   GET /api/users/organizer/:id
+ * @desc    Get public organizer profile
+ * @access  Public
+ */
+router.get("/organizer/:id", getOrganizerProfile);
 
 export default router;

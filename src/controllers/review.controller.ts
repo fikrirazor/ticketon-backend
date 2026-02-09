@@ -324,7 +324,7 @@ export const getOrganizerReviews = async (
       prisma.review.findMany({
         where: { event: { organizerId } }, // Filter: event yang dibuat organizer ini
         include: {
-          user: { select: { id: true, name: true } }, // Info reviewer
+          user: { select: { id: true, name: true, avatarUrl: true } }, // Info reviewer
           event: { select: { id: true, title: true } }, // Info event yang direview
         },
         skip,
