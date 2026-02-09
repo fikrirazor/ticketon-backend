@@ -34,7 +34,17 @@ router.post(
   validate(createEventSchema),
   createEvent,
 );
-router.put("/:id", authMiddleware, validate(updateEventSchema), updateEvent);
+router.put(
+  "/:id",
+  authMiddleware,
+  (req, _res, next) => {
+    (req as any).uploadDir = "events";
+    next();
+  },
+  upload.single("image"),
+  validate(updateEventSchema),
+  updateEvent,
+);
 router.delete("/:id", authMiddleware, deleteEvent);
 router.get("/:id/attendees", authMiddleware, getEventAttendees);
 

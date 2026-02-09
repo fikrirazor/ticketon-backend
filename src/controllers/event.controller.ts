@@ -4,6 +4,7 @@ import prisma from "../config/database";
 import { AppError } from "../utils/error";
 import { successResponse } from "../utils/apiResponse";
 import { logger } from "../utils/logger";
+import { apiCache } from "../services/cache.service";
 
 // Helper to calculate pagination
 const getPagination = (page: number, limit: number) => {
@@ -16,6 +17,20 @@ export const getEvents = async (req: Request, res: Response, next: NextFunction)
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const { category, location, search } = req.query;
+
+    // Create a unique cache key based on query parameters
+    const cacheKey = `events:${JSON.stringify({ page, limit, category, location, search })}`;
+    const cachedData = apiCache.get<{ events: any[]; total: number }>(cacheKey);
+
+    if (cachedData) {
+      const totalPages = Math.ceil(cachedData.total / limit);
+      return successResponse(res, "Events retrieved successfully (from cache)", cachedData.events, {
+        page,
+        limit,
+        total: cachedData.total,
+        totalPages,
+      });
+    }
 
     const { skip, take } = getPagination(page, limit);
 
@@ -68,6 +83,9 @@ export const getEvents = async (req: Request, res: Response, next: NextFunction)
       prisma.event.count({ where }),
     ]);
 
+    // Store in cache for 5 minutes (default)
+    apiCache.set(cacheKey, { events, total });
+
     const totalPages = Math.ceil(total / limit);
 
     successResponse(res, "Events retrieved successfully", events, {
@@ -90,6 +108,13 @@ export const getEventById = async (
   try {
     const { id } = req.params;
 
+    const cacheKey = `event:${id}`;
+    const cachedEvent = apiCache.get(cacheKey);
+
+    if (cachedEvent) {
+      return successResponse(res, "Event retrieved successfully (from cache)", cachedEvent);
+    }
+
     const event = await prisma.event.findFirst({
       where: { id, deletedAt: null },
       include: {
@@ -109,6 +134,8 @@ export const getEventById = async (
     if (!event) {
       throw new AppError(404, "Event not found");
     }
+
+    apiCache.set(cacheKey, event);
 
     successResponse(res, "Event retrieved successfully", event);
   } catch (error) {
@@ -171,8 +198,8 @@ export const createEvent = async (
       throw new AppError(400, "Location or locationId is required");
     }
 
-    const priceInt = parseInt(price as any);
-    const seatTotalInt = parseInt(seatTotal as any);
+    const priceInt = parseInt(price as any) || 0;
+    const seatTotalInt = parseInt(seatTotal as any) || 0;
 
     const event = await prisma.event.create({
       data: {
@@ -183,7 +210,7 @@ export const createEvent = async (
         endDate: new Date(endDate),
         price: priceInt,
         seatTotal: seatTotalInt,
-        seatLeft: seatTotalInt, // Initially seatLeft equals seatTotal
+        seatLeft: seatTotalInt,
         category,
         imageUrl,
         isPromoted,
@@ -191,6 +218,9 @@ export const createEvent = async (
         locationId: locationIdToUse,
       },
     });
+
+    // Invalidate events list cache
+    apiCache.flush();
 
     successResponse(res, "Event created successfully", event);
   } catch (error) {
@@ -241,30 +271,61 @@ export const updateEvent = async (
       }
     }
 
-    // Transform dates if present
-    if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
-    if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
+    // Handle Image Update: preserve existing imageUrl if no new file is uploaded
+    const imageUrl = (req as any).file?.path || updateData.imageUrl || event.imageUrl;
 
-    // Handle update of location by city string (create if necessary)
-    if (updateData.location) {
-      const city = (updateData.location as string).trim();
-      let locationRecord = await prisma.location.findUnique({ where: { city } });
-      if (!locationRecord) {
-        locationRecord = await prisma.location.create({ data: { city } });
+    // Filter valid fields for Prisma update to avoid "invalid invocation" errors
+    const validFields: Prisma.EventUpdateInput = {};
+    const schemaFields = [
+      "title",
+      "description",
+      "address",
+      "startDate",
+      "endDate",
+      "price",
+      "seatTotal",
+      "seatLeft",
+      "category",
+      "isPromoted",
+      "locationId",
+    ];
+
+    schemaFields.forEach((field) => {
+      if (updateData[field] !== undefined) {
+        (validFields as any)[field] = updateData[field];
       }
-      updateData.locationId = locationRecord.id;
-      delete updateData.location;
+    });
+
+    // Ensure numeric fields are correctly typed and handle nested fields
+    if (validFields.price !== undefined) validFields.price = parseInt(validFields.price as any);
+    if (validFields.seatTotal !== undefined)
+      validFields.seatTotal = parseInt(validFields.seatTotal as any);
+    if (validFields.seatLeft !== undefined)
+      validFields.seatLeft = parseInt(validFields.seatLeft as any);
+
+    // Ensure date fields are correctly typed
+    if (validFields.startDate !== undefined)
+      validFields.startDate = new Date(validFields.startDate as any);
+    if (validFields.endDate !== undefined)
+      validFields.endDate = new Date(validFields.endDate as any);
+
+    // Prisma's UpdateInput uses nested objects for relations
+    if (updateData.locationId !== undefined) {
+      const locationId = parseInt(updateData.locationId as any);
+      (validFields as any).location = { connect: { id: locationId } };
     }
 
-    // Robust boolean parsing for isPromoted in update
-    if (updateData.isPromoted !== undefined) {
-      updateData.isPromoted = updateData.isPromoted === true || updateData.isPromoted === "true";
-    }
+    // Always set imageUrl even if it hasn't changed (or was already in updateData)
+    validFields.imageUrl = imageUrl;
 
     const updatedEvent = await prisma.event.update({
       where: { id },
-      data: updateData,
+      data: validFields,
     });
+
+    // Invalidate caches
+    apiCache.del(`event:${id}`);
+    apiCache.flush(); // Flush others for simplicity as filtering results might change
 
     successResponse(res, "Event updated successfully", updatedEvent);
   } catch (error) {
@@ -297,6 +358,10 @@ export const deleteEvent = async (
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    // Invalidate caches
+    apiCache.del(`event:${id}`);
+    apiCache.flush();
 
     successResponse(res, "Event deleted successfully (soft delete)");
   } catch (error) {
