@@ -26,7 +26,8 @@ export const sendMail = async (to: string, subject: string, html: string) => {
     return info;
   } catch (error) {
     logger.error("Error sending email:", error);
-    // Don't throw error to avoid breaking the core transaction flow 
+    // Don't throw error to avoid breaking the core transaction flow
     // but log it for investigation
+    return undefined;
   }
 };

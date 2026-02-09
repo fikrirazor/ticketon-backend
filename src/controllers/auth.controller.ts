@@ -5,10 +5,7 @@ import { generateToken } from "../utils/jwt.util";
 import { AppError } from "../utils/error";
 import { generateReferralCode } from "../utils/referral.util";
 import { sendMail } from "../services/mail.service";
-import {
-  getForgotPasswordEmailTemplate,
-  getWelcomeEmailTemplate,
-} from "../utils/emailTemplates";
+import { getForgotPasswordEmailTemplate, getWelcomeEmailTemplate } from "../utils/emailTemplates";
 import crypto from "crypto";
 import { logger } from "../utils/logger";
 
@@ -101,11 +98,9 @@ export const signUp = async (req: Request, res: Response, next: NextFunction): P
     });
 
     // Send Welcome Email
-    sendMail(
-      user.email,
-      "Welcome to Ticketon!",
-      getWelcomeEmailTemplate(user.name),
-    ).catch((err) => logger.error("Welcome email failed:", err));
+    sendMail(user.email, "Welcome to Ticketon!", getWelcomeEmailTemplate(user.name)).catch((err) =>
+      logger.error("Welcome email failed:", err),
+    );
 
     res.status(201).json({
       success: true,

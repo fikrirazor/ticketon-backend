@@ -20,8 +20,5 @@ export const uploadPaymentProofSchema = yup.object().shape({
 });
 
 export const submitPaymentProofSchema = yup.object().shape({
-  paymentProofUrl: yup
-    .string()
-    .url("Payment proof must be a valid URL")
-    .optional(),
+  paymentProofUrl: yup.string().url("Payment proof must be a valid URL").optional(),
 });
