@@ -163,15 +163,30 @@ Content-Type: application/json
 {
   "title": "Rock Concert 2026",
   "description": "Amazing rock concert featuring top bands",
-  "location": "Jakarta Convention Center",
+  "locationId": 1,
+  "address": "Jakarta Convention Center, Senayan",
   "startDate": "2026-03-15T19:00:00Z",
   "endDate": "2026-03-15T23:00:00Z",
   "price": 500000,
   "seatTotal": 1000,
-  "category": "Music",
+  "category": "MUSIC",
   "imageUrl": "https://example.com/concert.jpg",
   "isPromoted": true
 }
+```
+
+#### Get Organizer Dashboard (ORGANIZER only)
+
+```http
+GET http://localhost:8000/api/organizer/dashboard
+Authorization: Bearer {token}
+```
+
+#### Get Event Attendees (Owner only)
+
+```http
+GET http://localhost:8000/api/events/{eventId}/attendees
+Authorization: Bearer {token}
 ```
 
 #### Update Event (Owner only)
@@ -203,19 +218,18 @@ Authorization: Bearer {token}
 - [ ] Register user
 - [ ] Change role to ORGANIZER in database
 - [ ] Login and get token
-- [ ] Create event
+- [ ] Create event (with locationId and address)
 - [ ] Get all events
-- [ ] Get event by ID
+- [ ] Get organizer dashboard stats
+- [ ] Get event attendees
 - [ ] Update event
-- [ ] Delete event
+- [ ] Delete event (soft delete)
 
-### Filtering & Search
+### Performance & Security
 
-- [ ] Filter by category
-- [ ] Filter by location
-- [ ] Search by keyword
-- [ ] Test pagination
-- [ ] Combined filters
+- [ ] Check response headers for `Content-Encoding: gzip`
+- [ ] Verify database indexes are active for Event queries
+- [ ] Test role-based access for Organizer routes
 
 ### Error Cases
 

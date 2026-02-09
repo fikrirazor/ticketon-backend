@@ -90,6 +90,11 @@ model Event {
   transactions Transaction[]
   vouchers    Voucher[]
   reviews     Review[]
+
+  @@index([category])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([locationId])
 }
 
 model Transaction {

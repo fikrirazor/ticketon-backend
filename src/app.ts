@@ -2,10 +2,13 @@ import express, { Application } from "express";
 import path from "path";
 import cors from "cors";
 import helmet from "helmet";
+import compression from "compression";
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 
 const app: Application = express();
+
+app.use(compression());
 
 // Security middleware
 app.use(
