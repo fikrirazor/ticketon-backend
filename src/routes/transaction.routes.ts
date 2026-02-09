@@ -9,6 +9,7 @@ import {
   rejectTransaction,
 } from "../controllers/transaction.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
+import { upload } from "../middleware/upload.middleware";
 import { validate } from "../middleware/validation.middleware";
 import {
   createTransactionSchema,
@@ -25,6 +26,11 @@ router.post(
   "/:id/payment-proof",
   authMiddleware,
   validate(uploadPaymentProofSchema, "params"),
+  (req, _res, next) => {
+    (req as any).uploadDir = "payments";
+    next();
+  },
+  upload.single("paymentProof"),
   validate(submitPaymentProofSchema),
   uploadPaymentProof,
 );

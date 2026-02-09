@@ -3,6 +3,8 @@ import prisma from "../config/database";
 import { AppError } from "../utils/error";
 import { successResponse } from "../utils/apiResponse";
 import { logger } from "../utils/logger";
+import { sendMail } from "../services/mail.service";
+import { getApprovedEmailTemplate, getRejectedEmailTemplate } from "../utils/emailTemplates";
 
 export const createTransaction = async (
   req: Request,
@@ -287,10 +289,15 @@ export const uploadPaymentProof = async (
   try {
     const { id } = req.params;
     const userId = req.user!.id;
-    const { paymentProofUrl } = req.body;
+    let { paymentProofUrl } = req.body;
+
+    // Use uploaded file path from Cloudinary if available
+    if ((req as any).file) {
+      paymentProofUrl = (req as any).file.path;
+    }
 
     if (!paymentProofUrl) {
-      throw new AppError(400, "Payment proof URL is required");
+      throw new AppError(400, "Payment proof file or URL is required");
     }
 
     const transaction = await prisma.transaction.findUnique({
@@ -440,7 +447,28 @@ export const approveTransaction = async (
     const updatedTransaction = await prisma.transaction.update({
       where: { id },
       data: { status: "DONE" },
+      include: {
+        user: true,
+        event: true,
+      },
     });
+
+    // Send Approval Email
+    const priceFormatted = new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(updatedTransaction.finalPrice);
+
+    sendMail(
+      updatedTransaction.user.email,
+      "Tiketon - Tiket Anda Telah Terkonfirmasi!",
+      getApprovedEmailTemplate(
+        updatedTransaction.user.name,
+        updatedTransaction.event.title,
+        priceFormatted,
+      ),
+    ).catch((err) => logger.error("Async email send failed:", err));
 
     successResponse(res, "Transaction approved successfully", updatedTransaction);
   } catch (error) {
@@ -476,7 +504,7 @@ export const rejectTransaction = async (
     }
 
     // Rollback logic (copied/adapted from cancelTransaction)
-    await prisma.$transaction(async (tx) => {
+    const transactionWithInfo = await prisma.$transaction(async (tx) => {
       // 1. Restore seats
       const quantity = transaction.items.reduce((sum: number, item) => sum + item.quantity, 0);
       await tx.event.update({
@@ -505,11 +533,24 @@ export const rejectTransaction = async (
       }
 
       // 4. Update status
-      await tx.transaction.update({
+      const updated = await tx.transaction.update({
         where: { id },
         data: { status: "REJECTED" },
+        include: {
+          user: true,
+          event: true,
+        },
       });
+
+      return updated;
     });
+
+    // Send Rejection Email
+    sendMail(
+      transactionWithInfo.user.email,
+      "Tiketon - Transaksi Dibatalkan",
+      getRejectedEmailTemplate(transactionWithInfo.user.name, transactionWithInfo.event.title),
+    ).catch((err) => logger.error("Async email send failed:", err));
 
     successResponse(res, "Transaction rejected successfully. Seats and points have been restored.");
   } catch (error) {

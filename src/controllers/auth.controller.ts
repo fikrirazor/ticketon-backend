@@ -4,7 +4,13 @@ import { hashPassword, comparePassword } from "../utils/password.util";
 import { generateToken } from "../utils/jwt.util";
 import { AppError } from "../utils/error";
 import { generateReferralCode } from "../utils/referral.util";
+import { sendMail } from "../services/mail.service";
+import {
+  getForgotPasswordEmailTemplate,
+  getWelcomeEmailTemplate,
+} from "../utils/emailTemplates";
 import crypto from "crypto";
+import { logger } from "../utils/logger";
 
 export const signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -93,6 +99,13 @@ export const signUp = async (req: Request, res: Response, next: NextFunction): P
       userId: user.id,
       email: user.email,
     });
+
+    // Send Welcome Email
+    sendMail(
+      user.email,
+      "Welcome to Ticketon!",
+      getWelcomeEmailTemplate(user.name),
+    ).catch((err) => logger.error("Welcome email failed:", err));
 
     res.status(201).json({
       success: true,
@@ -189,12 +202,19 @@ export const forgotPassword = async (
       },
     });
 
-    // NOTE: In production, send this via email.
-    // For now, return it for testing purposes.
+    // Send email with reset link
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    const resetLink = `${clientUrl}/reset-password?token=${resetToken}`;
+
+    sendMail(
+      user.email,
+      "Tiketon - Reset Your Password",
+      getForgotPasswordEmailTemplate(user.name, resetLink),
+    ).catch((err) => logger.error("Forgot password email failed:", err));
+
     res.status(200).json({
       success: true,
-      message: "Password reset token generated. Check your email (simulated).",
-      data: { resetToken },
+      message: "Password reset link has been sent to your email.",
     });
   } catch (error) {
     next(error);

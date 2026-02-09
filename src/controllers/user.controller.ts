@@ -58,9 +58,7 @@ export const updateProfile = async (
     }
 
     const { name, email, password } = req.body;
-    const avatarUrl = (req as any).file
-      ? `/${(req as any).file.path.replace(/\\/g, "/")}`
-      : undefined;
+    const avatarUrl = (req as any).file ? (req as any).file.path : undefined;
 
     const updateData: any = {};
     if (name) updateData.name = name;
@@ -132,6 +130,53 @@ export const getAllUsers = async (
       data: { users, count: users.length },
       page: 1,
       limit: 10,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getOrganizerProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const organizer = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        avatarUrl: true,
+        ratingSummary: true,
+        createdAt: true,
+        _count: {
+          select: {
+            events: { where: { deletedAt: null } },
+            reviews: true,
+          },
+        },
+      },
+    });
+
+    if (!organizer) {
+      throw new AppError(404, "Organizer not found");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Organizer profile retrieved successfully",
+      data: {
+        id: organizer.id,
+        name: organizer.name,
+        avatarUrl: organizer.avatarUrl,
+        averageRating: organizer.ratingSummary,
+        totalEvents: organizer._count.events,
+        totalReviews: organizer._count.reviews,
+        bio: "Kami adalah penyelenggara event profesional yang berfokus pada pengalaman musik dan teknologi terbaik. Menghadirkan inovasi dalam setiap pertunjukan.", // Fallback if no bio field in DB yet
+      },
     });
   } catch (error) {
     next(error);
