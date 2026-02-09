@@ -1,4 +1,4 @@
-# Backend Sample - Type-Safe Node.js Express Application
+# Ticketon Backend - Type-Safe Node.js Express Application
 
 A production-ready, type-safe Node.js Express application built with TypeScript, Prisma ORM, PostgreSQL, and JWT authentication.
 
@@ -10,6 +10,7 @@ A production-ready, type-safe Node.js Express application built with TypeScript,
 - **PostgreSQL** - Robust relational database
 - **JWT Authentication** - Secure token-based authentication
 - **Yup Validation** - Schema validation for environment variables and request data
+- **Performance Optimized** - Database indexing and Gzip response compression
 - **Error Handling** - Centralized error handling middleware
 - **Security** - Helmet and CORS protection
 - **Hot Reload** - Development server with automatic restart
@@ -104,36 +105,31 @@ npm start
 ```
 backend_sample/
 ├── prisma/
-│   └── schema.prisma          # Prisma schema definition
+│   └── schema.prisma          # Prisma schema definition (with indexes)
 ├── src/
 │   ├── config/
 │   │   ├── database.ts        # Prisma client configuration
 │   │   └── env.ts             # Environment variable validation
 │   ├── controllers/
 │   │   ├── auth.controller.ts # Authentication logic
-│   │   └── user.controller.ts # User management logic
+│   │   ├── event.controller.ts # Event management & filtering
+│   │   ├── organizer.controller.ts # Organizer dashboard & statistics
+│   │   ├── review.controller.ts # Review & rating system
+│   │   └── transaction.controller.ts # Transaction & payment logic
 │   ├── middleware/
-│   │   ├── auth.middleware.ts # JWT verification
-│   │   ├── error.middleware.ts # Error handling
-│   │   └── validation.middleware.ts # Request validation
+│   │   ├── auth.middleware.ts # JWT verification & role protection
+│   │   ├── error.middleware.ts # Centralized error handling
+│   │   ├── upload.middleware.ts # Cloudinary file upload
+│   │   └── validation.middleware.ts # Request validation using Yup
 │   ├── routes/
-│   │   ├── auth.routes.ts     # Auth endpoints
-│   │   ├── user.routes.ts     # User endpoints
+│   │   ├── auth.routes.ts, event.routes.ts, etc.
 │   │   └── index.ts           # Route aggregation
-│   ├── types/
-│   │   └── express.d.ts       # Express type extensions
 │   ├── utils/
-│   │   ├── jwt.util.ts        # JWT utilities
-│   │   └── password.util.ts   # Password hashing utilities
-│   ├── validations/
-│   │   └── auth.validation.ts # Auth validation schemas
-│   ├── app.ts                 # Express app configuration
-│   └── index.ts               # Application entry point
-├── .env                       # Environment variables (not in git)
-├── .gitignore                 # Git ignore rules
-├── env.example                # Example environment variables
-├── package.json               # Project dependencies and scripts
-├── tsconfig.json              # TypeScript configuration
+│   │   ├── transaction.cron.ts # Automated transaction expiry
+│   │   ├── jwt.util.ts, password.util.ts, etc.
+│   │   └── logger.ts          # Unified logging system
+│   ├── app.ts                 # Express app (Security, Compression, Routes)
+│   └── index.ts               # Server entry point & graceful shutdown
 └── README.md                  # This file
 ```
 
@@ -165,7 +161,6 @@ backend_sample/
 ### Users (Protected Routes)
 
 - **GET** `/api/users/profile` - Get current user profile
-
   - Requires: `Authorization: Bearer <token>`
 
 - **GET** `/api/users` - Get all users
@@ -308,7 +303,9 @@ ISC
 
 ## 👨‍💻 Author
 
-Your Name
+fikrirazor (https://github.com/fikrirazor)
+
+endangit (https://github.com/endang-git)
 
 ---
 
