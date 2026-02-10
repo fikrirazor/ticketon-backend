@@ -117,7 +117,10 @@ export const validateVoucher = async (
     const now = new Date();
 
     // Expiration checks
-    if (now < voucher.startDate) {
+    // Add 5 seconds buffer for clock drift
+    const bufferNow = new Date(now.getTime() + 5000);
+
+    if (bufferNow < voucher.startDate) {
       throw new AppError(400, "Voucher is not yet active");
     }
 
