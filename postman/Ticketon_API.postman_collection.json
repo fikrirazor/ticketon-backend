@@ -348,15 +348,18 @@
           "request": {
             "method": "PUT",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{token}}"},
-              {"key": "Content-Type", "value": "application/json"}
+              {"key": "Authorization", "value": "Bearer {{token}}"}
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Festival Title\",\n  \"price\": 275000\n}"
+              "mode": "formdata",
+              "formdata": [
+                 {"key": "title", "value": "Updated Festival Title", "type": "text"},
+                 {"key": "price", "value": "275000", "type": "text"},
+                 {"key": "image", "type": "file", "src": ""}
+              ]
             },
             "url": "{{baseUrl}}/events/{{eventId}}",
-            "description": "Update event details. Only allowed for the organizer who created it."
+            "description": "Update event details with optional image upload (via Cloudinary). Only allowed for the organizer who created it."
           }
         },
         {
@@ -460,15 +463,20 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{token}}"},
-              {"key": "Content-Type", "value": "application/json"}
+              {"key": "Authorization", "value": "Bearer {{token}}"}
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"paymentProofUrl\": \"https://example.com/receipt.jpg\"\n}"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "paymentProof",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
             },
             "url": "{{baseUrl}}/transactions/{{transactionId}}/payment-proof",
-            "description": "Submit a URL to the payment proof image. Moves status to WAITING_ADMIN."
+            "description": "Upload payment proof image. Moves status to WAITING_ADMIN."
           }
         },
         {
