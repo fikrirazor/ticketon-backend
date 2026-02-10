@@ -15,6 +15,7 @@ const envSchema = yup.object({
     .min(32, "JWT_SECRET must be at least 32 characters")
     .required("JWT_SECRET is required"),
   JWT_EXPIRES_IN: yup.string().default("7d"),
+  CLOUDINARY_URL: yup.string().required("CLOUDINARY_URL is required"),
 });
 
 // Validate and parse environment variables
@@ -44,6 +45,7 @@ export const config = {
     secret: env.JWT_SECRET,
     expiresIn: env.JWT_EXPIRES_IN,
   },
+  CLOUDINARY_URL: env.CLOUDINARY_URL,
 } as const;
 
 export default config;

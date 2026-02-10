@@ -5,6 +5,7 @@ import { successResponse } from "../utils/apiResponse";
 import { logger } from "../utils/logger";
 import { sendMail } from "../services/mail.service";
 import { getApprovedEmailTemplate, getRejectedEmailTemplate } from "../utils/emailTemplates";
+import cloudinary from "../config/cloudinary.config";
 
 export const createTransaction = async (
   req: Request,
@@ -292,8 +293,13 @@ export const uploadPaymentProof = async (
     let { paymentProofUrl } = req.body;
 
     // Use uploaded file path from Cloudinary if available
-    if ((req as any).file) {
-      paymentProofUrl = (req as any).file.path;
+    if (req.file) {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const uploadResponse = await cloudinary.uploader.upload(dataURI, {
+        folder: "ticketon/transactions",
+      });
+      paymentProofUrl = uploadResponse.secure_url;
     }
 
     if (!paymentProofUrl) {

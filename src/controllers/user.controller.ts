@@ -47,6 +47,8 @@ export const getProfile = async (
   }
 };
 
+import cloudinary from "../config/cloudinary.config";
+
 export const updateProfile = async (
   req: Request,
   res: Response,
@@ -58,7 +60,16 @@ export const updateProfile = async (
     }
 
     const { name, email, password } = req.body;
-    const avatarUrl = (req as any).file ? (req as any).file.path : undefined;
+    let avatarUrl: string | undefined;
+
+    if (req.file) {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const uploadResponse = await cloudinary.uploader.upload(dataURI, {
+        folder: "ticketon/avatars",
+      });
+      avatarUrl = uploadResponse.secure_url;
+    }
 
     const updateData: any = {};
     if (name) updateData.name = name;

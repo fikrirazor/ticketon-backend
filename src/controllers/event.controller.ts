@@ -5,6 +5,7 @@ import { AppError } from "../utils/error";
 import { successResponse } from "../utils/apiResponse";
 import { logger } from "../utils/logger";
 import { apiCache } from "../services/cache.service";
+import cloudinary from "../config/cloudinary.config";
 
 // Helper to calculate pagination
 const getPagination = (page: number, limit: number) => {
@@ -169,7 +170,15 @@ export const createEvent = async (
     // Robust boolean parsing for isPromoted (FormData sends strings)
     const isPromoted = isPromotedInput === true || isPromotedInput === "true";
 
-    const imageUrl = (req as any).file?.path || bodyImageUrl;
+    let imageUrl = bodyImageUrl;
+    if (req.file) {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const uploadResponse = await cloudinary.uploader.upload(dataURI, {
+        folder: "ticketon/events",
+      });
+      imageUrl = uploadResponse.secure_url;
+    }
 
     const user = req.user!;
     if (user.role !== "ORGANIZER") {
@@ -272,7 +281,15 @@ export const updateEvent = async (
     }
 
     // Handle Image Update: preserve existing imageUrl if no new file is uploaded
-    const imageUrl = (req as any).file?.path || updateData.imageUrl || event.imageUrl;
+    let imageUrl = updateData.imageUrl || event.imageUrl;
+    if (req.file) {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const uploadResponse = await cloudinary.uploader.upload(dataURI, {
+        folder: "ticketon/events",
+      });
+      imageUrl = uploadResponse.secure_url;
+    }
 
     // Filter valid fields for Prisma update to avoid "invalid invocation" errors
     const validFields: Prisma.EventUpdateInput = {};
