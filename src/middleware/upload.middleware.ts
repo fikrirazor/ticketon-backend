@@ -1,19 +1,7 @@
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import cloudinary from "../config/cloudinary.config";
 import { AppError } from "../utils/error";
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req, _file) => {
-    const subDir = (req as any).uploadDir || "general";
-    return {
-      folder: `ticketon/${subDir}`,
-      allowed_formats: ["jpg", "png", "jpeg"],
-      public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-    };
-  },
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (_req: any, file: any, cb: any) => {
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];

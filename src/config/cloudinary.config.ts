@@ -1,7 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 
-// Cloudinary will automatically use the CLOUDINARY_URL environment variable
-// if it is present. No need for manual config if the URL is set.
+// Cloudinary automatically picks up CLOUDINARY_URL from process.env
 cloudinary.config();
 
 export default cloudinary;
