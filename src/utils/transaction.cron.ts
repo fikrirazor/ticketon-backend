@@ -53,7 +53,7 @@ export const initTransactionCron = () => {
           });
 
           logger.info(`Transaction ${transaction.id} (WAITING_PAYMENT) has been expired.`);
-        });
+        }, { timeout: 15000 });
       }
 
       // 2. Handle WAITING_ADMIN auto-cancel (> 3 days)
@@ -104,7 +104,7 @@ export const initTransactionCron = () => {
           });
 
           logger.info(`Transaction ${transaction.id} (WAITING_ADMIN) auto-canceled after 3 days.`);
-        });
+        }, { timeout: 15000 });
       }
     } catch (error) {
       logger.error("Error in Transaction Auto-Expirations Cron Job:", error);

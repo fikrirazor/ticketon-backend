@@ -54,7 +54,8 @@ export const createTransaction = async (
       }
 
       const now = new Date();
-      if (now < voucher.startDate || now > voucher.endDate) {
+      const bufferNow = new Date(now.getTime() + 5000);
+      if (bufferNow < voucher.startDate || now > voucher.endDate) {
         throw new AppError(400, "Voucher is not active or has expired");
       }
 
@@ -188,7 +189,7 @@ export const createTransaction = async (
           voucher: true,
         },
       });
-    });
+    }, { timeout: 15000 });
 
     successResponse(
       res,
@@ -415,7 +416,7 @@ export const cancelTransaction = async (
         where: { id },
         data: { status: "CANCELED" },
       });
-    });
+    }, { timeout: 15000 });
 
     successResponse(res, "Transaction canceled successfully. Seats and points have been restored.");
   } catch (error) {
@@ -549,7 +550,7 @@ export const rejectTransaction = async (
       });
 
       return updated;
-    });
+    }, { timeout: 15000 });
 
     // Send Rejection Email
     sendMail(
